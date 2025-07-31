@@ -1,1 +1,264 @@
-<p>hoge</p>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sandbox 2025 - インデックス</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+        
+        .page-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .page-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .page-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .page-number {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 12px;
+        }
+        
+        .page-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .page-description {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .no-pages {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+            font-size: 1.2em;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .scan-info {
+            text-align: center;
+            color: #666;
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .footer {
+            text-align: center;
+            color: #999;
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Sandbox 2025</h1>
+        
+        <div id="loading" class="loading">ページを検索中...</div>
+        <div id="pageList" class="page-list" style="display: none;"></div>
+        <div id="noPages" class="no-pages" style="display: none;">
+            ページが見つかりませんでした
+        </div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div class="scan-info" id="scanInfo" style="display: none;">
+            <p>検索範囲: <span id="scanRange"></span></p>
+            <p>見つかったページ: <span id="pageCount">0</span>件</p>
+        </div>
+        
+        <div class="footer">
+            <p>AI Sandbox 2025 - Dynamic Page Discovery</p>
+        </div>
+    </div>
+    
+    <script>
+        const pages = [];
+        const maxDirectories = 100; // 最大検索ディレクトリ数
+        let foundCount = 0;
+        let checkedCount = 0;
+        
+        // ページ情報を取得
+        async function fetchPageInfo(directory) {
+            try {
+                const response = await fetch(`${directory}/index.html`, { method: 'HEAD' });
+                if (response.ok) {
+                    // ページが存在する場合、実際のコンテンツを取得してタイトルを抽出
+                    const contentResponse = await fetch(`${directory}/index.html`);
+                    const text = await contentResponse.text();
+                    
+                    // タイトルを抽出
+                    const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+                    const title = titleMatch ? titleMatch[1] : `ページ ${directory}`;
+                    
+                    // 簡単な説明を生成（h1タグやメタディスクリプションから）
+                    const h1Match = text.match(/<h1[^>]*>(.*?)<\/h1>/i);
+                    const description = h1Match ? h1Match[1].replace(/<[^>]*>/g, '') : 'コンテンツページ';
+                    
+                    return {
+                        directory,
+                        title,
+                        description,
+                        exists: true
+                    };
+                }
+            } catch (error) {
+                // エラーは無視（ページが存在しない）
+            }
+            return null;
+        }
+        
+        // ページをスキャン
+        async function scanPages() {
+            const promises = [];
+            
+            // 1から順番にチェック
+            for (let i = 1; i <= maxDirectories; i++) {
+                promises.push(fetchPageInfo(i.toString()));
+            }
+            
+            // すべてのリクエストを並行実行
+            const results = await Promise.all(promises);
+            
+            // 存在するページのみをフィルタリング
+            const existingPages = results.filter(page => page !== null);
+            
+            // 連続する番号のページのみを取得（途中で途切れたら終了）
+            for (let i = 0; i < existingPages.length; i++) {
+                const expectedDir = (i + 1).toString();
+                if (existingPages[i].directory !== expectedDir) {
+                    // 連続性が途切れた
+                    return existingPages.slice(0, i);
+                }
+                pages.push(existingPages[i]);
+            }
+            
+            return pages;
+        }
+        
+        // ページカードを作成
+        function createPageCard(page) {
+            return `
+                <a href="${page.directory}/" class="page-card">
+                    <span class="page-number">${page.directory}</span>
+                    <h2 class="page-title">${page.title}</h2>
+                    <p class="page-description">${page.description}</p>
+                </a>
+            `;
+        }
+        
+        // ページリストを表示
+        function displayPages() {
+            const pageListEl = document.getElementById('pageList');
+            const noPageEl = document.getElementById('noPages');
+            const scanInfoEl = document.getElementById('scanInfo');
+            const scanRangeEl = document.getElementById('scanRange');
+            const pageCountEl = document.getElementById('pageCount');
+            
+            if (pages.length === 0) {
+                pageListEl.style.display = 'none';
+                noPageEl.style.display = 'block';
+            } else {
+                pageListEl.innerHTML = pages.map(createPageCard).join('');
+                pageListEl.style.display = 'grid';
+                noPageEl.style.display = 'none';
+                
+                // スキャン情報を更新
+                const lastPage = pages[pages.length - 1];
+                scanRangeEl.textContent = `1 〜 ${lastPage.directory}`;
+                pageCountEl.textContent = pages.length;
+            }
+            
+            scanInfoEl.style.display = 'block';
+        }
+        
+        // エラー表示
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+        
+        // 初期化
+        async function init() {
+            try {
+                await scanPages();
+                document.getElementById('loading').style.display = 'none';
+                displayPages();
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showError('ページの検索中にエラーが発生しました: ' + error.message);
+            }
+        }
+        
+        // ページ読み込み時に実行
+        init();
+    </script>
+</body>
+</html>
