@@ -303,7 +303,7 @@
     </div>
     
     <div class="main-content">
-        <div class="container">
+        <div class="container" id="mainContainer">
             <div class="dashboard-grid">
                 <div class="card">
                     <h2>本日の売上</h2>
@@ -398,6 +398,330 @@
     <div id="notification" class="notification"></div>
 
     <script>
+        // ページコンテンツ
+        const pageContents = {
+            dashboard: `
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h2>本日の売上</h2>
+                        <div class="stat-number editable" data-field="sales">¥1,234,567</div>
+                        <div class="stat-label">前日比 +15.3%</div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>新規注文</h2>
+                        <div class="stat-number editable" data-field="orders">89</div>
+                        <div class="stat-label">本日の注文数</div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>アクティブユーザー</h2>
+                        <div class="stat-number editable" data-field="users">2,456</div>
+                        <div class="stat-label">現在オンライン</div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2>在庫アラート</h2>
+                        <div class="stat-number editable" data-field="alerts">12</div>
+                        <div class="stat-label">在庫切れ間近の商品</div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2>売上推移（架空データ）</h2>
+                    <div class="chart-placeholder">
+                        📊 グラフエリア（架空の売上データ）
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2>最新の注文（架空データ）</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>注文ID</th>
+                                <th>顧客名</th>
+                                <th>金額</th>
+                                <th>ステータス</th>
+                                <th>アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#FAKE-001</td>
+                                <td>架空 太郎</td>
+                                <td>¥45,000</td>
+                                <td class="status-active">処理中</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-001')">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#FAKE-002</td>
+                                <td>サンプル 花子</td>
+                                <td>¥23,500</td>
+                                <td class="status-pending">保留中</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-002')">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#FAKE-003</td>
+                                <td>テスト 次郎</td>
+                                <td>¥78,900</td>
+                                <td class="status-active">発送済</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-003')">詳細</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2>クイックアクション</h2>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="button" onclick="showProductModal()">新規商品追加</button>
+                        <button class="button" onclick="showInventoryModal()">在庫確認</button>
+                        <button class="button" onclick="generateReport()">レポート作成</button>
+                        <button class="button" onclick="showCampaignModal()">キャンペーン設定</button>
+                    </div>
+                </div>
+            `,
+            products: `
+                <div class="card">
+                    <h2>商品管理</h2>
+                    <div style="margin-bottom: 20px;">
+                        <button class="button" onclick="showProductModal()">新規商品追加</button>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>商品ID</th>
+                                <th>商品名</th>
+                                <th>価格</th>
+                                <th>在庫</th>
+                                <th>カテゴリ</th>
+                                <th>アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#P001</td>
+                                <td>架空の商品A</td>
+                                <td>¥12,000</td>
+                                <td>45</td>
+                                <td>架空カテゴリ1</td>
+                                <td><button class="button">編集</button></td>
+                            </tr>
+                            <tr>
+                                <td>#P002</td>
+                                <td>架空の商品B</td>
+                                <td>¥8,500</td>
+                                <td>23</td>
+                                <td>架空カテゴリ2</td>
+                                <td><button class="button">編集</button></td>
+                            </tr>
+                            <tr>
+                                <td>#P003</td>
+                                <td>架空の商品C</td>
+                                <td>¥25,000</td>
+                                <td>8</td>
+                                <td>架空カテゴリ1</td>
+                                <td><button class="button">編集</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+            customers: `
+                <div class="card">
+                    <h2>顧客管理</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>顧客ID</th>
+                                <th>名前</th>
+                                <th>メールアドレス</th>
+                                <th>登録日</th>
+                                <th>総購入額</th>
+                                <th>アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#C001</td>
+                                <td>架空 太郎</td>
+                                <td>kakuu.taro@example.com</td>
+                                <td>2024-01-15</td>
+                                <td>¥125,000</td>
+                                <td><button class="button">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#C002</td>
+                                <td>サンプル 花子</td>
+                                <td>sample.hanako@example.com</td>
+                                <td>2024-01-20</td>
+                                <td>¥78,500</td>
+                                <td><button class="button">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#C003</td>
+                                <td>テスト 次郎</td>
+                                <td>test.jiro@example.com</td>
+                                <td>2024-01-25</td>
+                                <td>¥235,000</td>
+                                <td><button class="button">詳細</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+            orders: `
+                <div class="card">
+                    <h2>注文管理</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>注文ID</th>
+                                <th>顧客名</th>
+                                <th>注文日時</th>
+                                <th>金額</th>
+                                <th>ステータス</th>
+                                <th>アクション</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#FAKE-001</td>
+                                <td>架空 太郎</td>
+                                <td>2024-01-31 14:30</td>
+                                <td>¥45,000</td>
+                                <td class="status-active">処理中</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-001')">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#FAKE-002</td>
+                                <td>サンプル 花子</td>
+                                <td>2024-01-31 13:15</td>
+                                <td>¥23,500</td>
+                                <td class="status-pending">保留中</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-002')">詳細</button></td>
+                            </tr>
+                            <tr>
+                                <td>#FAKE-003</td>
+                                <td>テスト 次郎</td>
+                                <td>2024-01-31 10:45</td>
+                                <td>¥78,900</td>
+                                <td class="status-active">発送済</td>
+                                <td><button class="button" onclick="showOrderDetails('#FAKE-003')">詳細</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+            sales: `
+                <div class="card">
+                    <h2>売上レポート</h2>
+                    <p>期間: 2024年1月1日 - 2024年1月31日</p>
+                    <div class="dashboard-grid" style="margin-top: 20px;">
+                        <div class="card">
+                            <h3>総売上</h3>
+                            <div class="stat-number">¥38,234,567</div>
+                        </div>
+                        <div class="card">
+                            <h3>注文数</h3>
+                            <div class="stat-number">2,845</div>
+                        </div>
+                        <div class="card">
+                            <h3>平均注文額</h3>
+                            <div class="stat-number">¥13,440</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="button" onclick="generateReport()">詳細レポート生成</button>
+                    </div>
+                </div>
+            `,
+            analytics: `
+                <div class="card">
+                    <h2>分析</h2>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3>ページビュー</h3>
+                            <div class="stat-number">1,234,567</div>
+                            <div class="stat-label">今月</div>
+                        </div>
+                        <div class="card">
+                            <h3>コンバージョン率</h3>
+                            <div class="stat-number">3.2%</div>
+                            <div class="stat-label">前月比 +0.5%</div>
+                        </div>
+                        <div class="card">
+                            <h3>直帰率</h3>
+                            <div class="stat-number">42.3%</div>
+                            <div class="stat-label">前月比 -2.1%</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>人気商品ランキング（架空データ）</h3>
+                        <ol>
+                            <li>架空の商品X - 523個</li>
+                            <li>架空の商品Y - 412個</li>
+                            <li>架空の商品Z - 389個</li>
+                        </ol>
+                    </div>
+                </div>
+            `,
+            settings: `
+                <div class="card">
+                    <h2>設定</h2>
+                    <div class="form-group">
+                        <label>サイト名:</label>
+                        <input type="text" value="架空ショップ">
+                    </div>
+                    <div class="form-group">
+                        <label>管理者メール:</label>
+                        <input type="email" value="admin@fictional-shop.com">
+                    </div>
+                    <div class="form-group">
+                        <label>タイムゾーン:</label>
+                        <select>
+                            <option>Asia/Tokyo</option>
+                            <option>America/New_York</option>
+                            <option>Europe/London</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>言語:</label>
+                        <select>
+                            <option>日本語</option>
+                            <option>English</option>
+                        </select>
+                    </div>
+                    <button class="button">設定を保存（架空の動作）</button>
+                </div>
+            `
+        };
+
+        // ページ切り替え
+        function switchPage(pageName) {
+            const container = document.getElementById('mainContainer');
+            container.innerHTML = pageContents[pageName] || '<div class="card"><h2>ページが見つかりません</h2></div>';
+            
+            // 編集可能な要素を再バインド
+            bindEditableElements();
+        }
+
+        // 編集可能な要素のイベントバインド
+        function bindEditableElements() {
+            document.querySelectorAll('.editable').forEach(elem => {
+                elem.addEventListener('click', function() {
+                    const currentValue = this.textContent;
+                    const field = this.getAttribute('data-field');
+                    const newValue = prompt('新しい値を入力してください:', currentValue);
+                    if (newValue !== null && newValue !== '') {
+                        this.textContent = newValue;
+                        showNotification('値を更新しました');
+                    }
+                });
+            });
+        }
+
         // ページ切り替え
         document.querySelectorAll('.sidebar a').forEach(link => {
             link.addEventListener('click', function(e) {
@@ -408,23 +732,14 @@
                 if (page === 'logout') {
                     showNotification('ログアウトしました（架空の動作）');
                 } else {
+                    switchPage(page);
                     showNotification(`${this.textContent}ページに切り替えました`);
                 }
             });
         });
 
-        // 編集可能な数値
-        document.querySelectorAll('.editable').forEach(elem => {
-            elem.addEventListener('click', function() {
-                const currentValue = this.textContent;
-                const field = this.getAttribute('data-field');
-                const newValue = prompt('新しい値を入力してください:', currentValue);
-                if (newValue !== null && newValue !== '') {
-                    this.textContent = newValue;
-                    showNotification('値を更新しました');
-                }
-            });
-        });
+        // 初期表示時に編集可能な要素をバインド
+        bindEditableElements();
 
         // 注文詳細表示
         function showOrderDetails(orderId) {
