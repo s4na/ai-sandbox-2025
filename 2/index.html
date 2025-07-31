@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品データビューワー</title>
+    <title>架空商品データビューワー</title>
     <style>
         * {
             margin: 0;
@@ -28,12 +28,56 @@
             margin-bottom: 30px;
         }
         
+        .drop-zone {
+            background: white;
+            border: 3px dashed #007bff;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .drop-zone.dragover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone.loaded {
+            border-color: #28a745;
+            background: #f8f9fa;
+        }
+        
+        .drop-zone-icon {
+            font-size: 64px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        
+        .drop-zone-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone-subtext {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
         .controls {
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            display: none;
         }
         
         .search-box {
@@ -165,7 +209,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            display: flex;
+            display: none;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 20px;
@@ -185,11 +229,36 @@
             font-weight: bold;
             color: #333;
         }
+        
+        .reset-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .reset-button:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>商品データビューワー</h1>
+        <h1>架空商品データビューワー</h1>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📁</div>
+            <div class="drop-zone-text">JSONLファイルをドラッグ&ドロップ</div>
+            <div class="drop-zone-subtext">または クリックしてファイルを選択</div>
+            <input type="file" id="fileInput" class="file-input" accept=".jsonl">
+        </div>
+        
+        <button class="reset-button" id="resetButton">別のファイルを読み込む</button>
         
         <div class="stats" id="stats">
             <div class="stat-item">
@@ -210,7 +279,7 @@
             </div>
         </div>
         
-        <div class="controls">
+        <div class="controls" id="controls">
             <input type="text" class="search-box" id="searchBox" placeholder="商品名で検索...">
             <div class="filter-group">
                 <label for="categoryFilter">カテゴリ:</label>
@@ -230,7 +299,6 @@
             </div>
         </div>
         
-        <div id="loading" class="loading">データを読み込んでいます...</div>
         <div id="error" class="error" style="display: none;"></div>
         <div id="productGrid" class="product-grid" style="display: none;"></div>
     </div>
@@ -239,36 +307,133 @@
         let products = [];
         let filteredProducts = [];
         
-        // データ読み込み
-        async function loadData() {
+        // ドロップゾーンの設定
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const resetButton = document.getElementById('resetButton');
+        
+        // ドロップゾーンのイベント
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        // ファイル選択のイベント
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        // リセットボタン
+        resetButton.addEventListener('click', () => {
+            resetView();
+        });
+        
+        // ファイル処理
+        async function handleFile(file) {
+            if (!file.name.endsWith('.jsonl')) {
+                showError('JSONLファイルを選択してください');
+                return;
+            }
+            
             try {
-                const response = await fetch('data.jsonl');
-                const text = await response.text();
-                const lines = text.trim().split('\n');
+                const text = await file.text();
+                const lines = text.trim().split('\n').filter(line => line.trim());
                 
-                products = lines.map(line => {
+                products = [];
+                let errorCount = 0;
+                
+                lines.forEach((line, index) => {
                     try {
-                        return JSON.parse(line);
+                        const product = JSON.parse(line);
+                        products.push(product);
                     } catch (e) {
-                        console.error('JSONパースエラー:', e);
-                        return null;
+                        errorCount++;
+                        console.error(`行 ${index + 1} のパースエラー:`, e);
                     }
-                }).filter(p => p !== null);
+                });
+                
+                if (products.length === 0) {
+                    showError('有効な商品データが見つかりませんでした');
+                    return;
+                }
+                
+                if (errorCount > 0) {
+                    console.warn(`${errorCount}行のデータをスキップしました`);
+                }
                 
                 filteredProducts = [...products];
+                
+                // UIを更新
+                dropZone.style.display = 'none';
+                dropZone.classList.add('loaded');
+                resetButton.style.display = 'block';
+                document.getElementById('stats').style.display = 'flex';
+                document.getElementById('controls').style.display = 'block';
+                document.getElementById('productGrid').style.display = 'grid';
+                
+                // カテゴリをリセット
+                const categoryFilter = document.getElementById('categoryFilter');
+                categoryFilter.innerHTML = '<option value="">すべて</option>';
                 
                 updateCategories();
                 updateStats();
                 renderProducts();
                 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('productGrid').style.display = 'grid';
+                hideError();
             } catch (error) {
-                console.error('データ読み込みエラー:', error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'データの読み込みに失敗しました: ' + error.message;
+                showError('ファイルの読み込みに失敗しました: ' + error.message);
             }
+        }
+        
+        // ビューをリセット
+        function resetView() {
+            products = [];
+            filteredProducts = [];
+            
+            dropZone.style.display = 'block';
+            dropZone.classList.remove('loaded');
+            resetButton.style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('productGrid').style.display = 'none';
+            document.getElementById('productGrid').innerHTML = '';
+            
+            // フィルターをリセット
+            document.getElementById('searchBox').value = '';
+            document.getElementById('categoryFilter').innerHTML = '<option value="">すべて</option>';
+            document.getElementById('sortBy').selectedIndex = 0;
+            
+            hideError();
+        }
+        
+        // エラー表示
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+        
+        // エラー非表示
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
         }
         
         // カテゴリ一覧を更新
@@ -373,9 +538,6 @@
         document.getElementById('searchBox').addEventListener('input', filterAndSort);
         document.getElementById('categoryFilter').addEventListener('change', filterAndSort);
         document.getElementById('sortBy').addEventListener('change', filterAndSort);
-        
-        // 初期化
-        loadData();
     </script>
 </body>
 </html>
