@@ -183,6 +183,100 @@
                 margin-left: 0;
             }
         }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .button-secondary {
+            background-color: #95a5a6;
+        }
+        
+        .button-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .sidebar a.active {
+            background-color: #2c3e50;
+        }
+        
+        .editable {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 2px;
+            transition: background-color 0.2s;
+        }
+        
+        .editable:hover {
+            background-color: #e8f4f8;
+        }
     </style>
 </head>
 <body>
@@ -197,14 +291,14 @@
     
     <div class="sidebar">
         <ul>
-            <li><a href="#">📊 ダッシュボード</a></li>
-            <li><a href="#">📦 商品管理</a></li>
-            <li><a href="#">👥 顧客管理</a></li>
-            <li><a href="#">🛒 注文管理</a></li>
-            <li><a href="#">💰 売上レポート</a></li>
-            <li><a href="#">📈 分析</a></li>
-            <li><a href="#">⚙️ 設定</a></li>
-            <li><a href="#">🚪 ログアウト</a></li>
+            <li><a href="#" class="active" data-page="dashboard">📊 ダッシュボード</a></li>
+            <li><a href="#" data-page="products">📦 商品管理</a></li>
+            <li><a href="#" data-page="customers">👥 顧客管理</a></li>
+            <li><a href="#" data-page="orders">🛒 注文管理</a></li>
+            <li><a href="#" data-page="sales">💰 売上レポート</a></li>
+            <li><a href="#" data-page="analytics">📈 分析</a></li>
+            <li><a href="#" data-page="settings">⚙️ 設定</a></li>
+            <li><a href="#" data-page="logout">🚪 ログアウト</a></li>
         </ul>
     </div>
     
@@ -213,25 +307,25 @@
             <div class="dashboard-grid">
                 <div class="card">
                     <h2>本日の売上</h2>
-                    <div class="stat-number">¥1,234,567</div>
+                    <div class="stat-number editable" data-field="sales">¥1,234,567</div>
                     <div class="stat-label">前日比 +15.3%</div>
                 </div>
                 
                 <div class="card">
                     <h2>新規注文</h2>
-                    <div class="stat-number">89</div>
+                    <div class="stat-number editable" data-field="orders">89</div>
                     <div class="stat-label">本日の注文数</div>
                 </div>
                 
                 <div class="card">
                     <h2>アクティブユーザー</h2>
-                    <div class="stat-number">2,456</div>
+                    <div class="stat-number editable" data-field="users">2,456</div>
                     <div class="stat-label">現在オンライン</div>
                 </div>
                 
                 <div class="card">
                     <h2>在庫アラート</h2>
-                    <div class="stat-number">12</div>
+                    <div class="stat-number editable" data-field="alerts">12</div>
                     <div class="stat-label">在庫切れ間近の商品</div>
                 </div>
             </div>
@@ -261,21 +355,21 @@
                             <td>架空 太郎</td>
                             <td>¥45,000</td>
                             <td class="status-active">処理中</td>
-                            <td><button class="button">詳細</button></td>
+                            <td><button class="button" onclick="showOrderDetails('#FAKE-001')">詳細</button></td>
                         </tr>
                         <tr>
                             <td>#FAKE-002</td>
                             <td>サンプル 花子</td>
                             <td>¥23,500</td>
                             <td class="status-pending">保留中</td>
-                            <td><button class="button">詳細</button></td>
+                            <td><button class="button" onclick="showOrderDetails('#FAKE-002')">詳細</button></td>
                         </tr>
                         <tr>
                             <td>#FAKE-003</td>
                             <td>テスト 次郎</td>
                             <td>¥78,900</td>
                             <td class="status-active">発送済</td>
-                            <td><button class="button">詳細</button></td>
+                            <td><button class="button" onclick="showOrderDetails('#FAKE-003')">詳細</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -284,13 +378,204 @@
             <div class="card" style="margin-top: 20px;">
                 <h2>クイックアクション</h2>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="button">新規商品追加</button>
-                    <button class="button">在庫確認</button>
-                    <button class="button">レポート作成</button>
-                    <button class="button">キャンペーン設定</button>
+                    <button class="button" onclick="showProductModal()">新規商品追加</button>
+                    <button class="button" onclick="showInventoryModal()">在庫確認</button>
+                    <button class="button" onclick="generateReport()">レポート作成</button>
+                    <button class="button" onclick="showCampaignModal()">キャンペーン設定</button>
                 </div>
             </div>
         </div>
     </div>
+    <!-- モーダル -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // ページ切り替え
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                const page = this.getAttribute('data-page');
+                if (page === 'logout') {
+                    showNotification('ログアウトしました（架空の動作）');
+                } else {
+                    showNotification(`${this.textContent}ページに切り替えました`);
+                }
+            });
+        });
+
+        // 編集可能な数値
+        document.querySelectorAll('.editable').forEach(elem => {
+            elem.addEventListener('click', function() {
+                const currentValue = this.textContent;
+                const field = this.getAttribute('data-field');
+                const newValue = prompt('新しい値を入力してください:', currentValue);
+                if (newValue !== null && newValue !== '') {
+                    this.textContent = newValue;
+                    showNotification('値を更新しました');
+                }
+            });
+        });
+
+        // 注文詳細表示
+        function showOrderDetails(orderId) {
+            const content = `
+                <h2>注文詳細</h2>
+                <p><strong>注文ID:</strong> ${orderId}</p>
+                <p><strong>注文日時:</strong> 2024-01-31 14:30:00</p>
+                <p><strong>配送先:</strong> 架空県架空市架空町1-2-3</p>
+                <div class="form-group">
+                    <label>ステータス:</label>
+                    <select>
+                        <option>処理中</option>
+                        <option>発送準備中</option>
+                        <option>発送済</option>
+                        <option>配達完了</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button class="button" onclick="updateOrder()">更新</button>
+                    <button class="button button-secondary" onclick="closeModal()">閉じる</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        // 商品追加モーダル
+        function showProductModal() {
+            const content = `
+                <h2>新規商品追加</h2>
+                <div class="form-group">
+                    <label>商品名:</label>
+                    <input type="text" placeholder="架空の商品名">
+                </div>
+                <div class="form-group">
+                    <label>価格:</label>
+                    <input type="number" placeholder="10000">
+                </div>
+                <div class="form-group">
+                    <label>カテゴリ:</label>
+                    <select>
+                        <option>架空カテゴリ1</option>
+                        <option>架空カテゴリ2</option>
+                        <option>架空カテゴリ3</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button class="button" onclick="addProduct()">追加</button>
+                    <button class="button button-secondary" onclick="closeModal()">キャンセル</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        // 在庫確認モーダル
+        function showInventoryModal() {
+            const content = `
+                <h2>在庫確認</h2>
+                <p>以下の商品が在庫切れ間近です：</p>
+                <ul>
+                    <li>架空商品A - 残り5個</li>
+                    <li>架空商品B - 残り3個</li>
+                    <li>架空商品C - 残り8個</li>
+                </ul>
+                <div class="button-group">
+                    <button class="button" onclick="orderStock()">発注</button>
+                    <button class="button button-secondary" onclick="closeModal()">閉じる</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        // キャンペーン設定モーダル
+        function showCampaignModal() {
+            const content = `
+                <h2>キャンペーン設定</h2>
+                <div class="form-group">
+                    <label>キャンペーン名:</label>
+                    <input type="text" placeholder="架空セール2024">
+                </div>
+                <div class="form-group">
+                    <label>割引率:</label>
+                    <input type="number" placeholder="20" min="0" max="100">%
+                </div>
+                <div class="form-group">
+                    <label>期間:</label>
+                    <input type="date"> ~ <input type="date">
+                </div>
+                <div class="button-group">
+                    <button class="button" onclick="createCampaign()">作成</button>
+                    <button class="button button-secondary" onclick="closeModal()">キャンセル</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        // モーダル表示
+        function showModal(content) {
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        // モーダル閉じる
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // 通知表示
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // アクション関数
+        function updateOrder() {
+            closeModal();
+            showNotification('注文情報を更新しました（架空の動作）');
+        }
+
+        function addProduct() {
+            closeModal();
+            showNotification('商品を追加しました（架空の動作）');
+        }
+
+        function orderStock() {
+            closeModal();
+            showNotification('在庫を発注しました（架空の動作）');
+        }
+
+        function createCampaign() {
+            closeModal();
+            showNotification('キャンペーンを作成しました（架空の動作）');
+        }
+
+        function generateReport() {
+            showNotification('レポートを生成中...（架空の動作）');
+            setTimeout(() => {
+                showNotification('レポートが完成しました！');
+            }, 2000);
+        }
+
+        // モーダル外クリックで閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
