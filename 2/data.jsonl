@@ -1,0 +1,15 @@
+{"id": 1, "name": "ワイヤレスイヤホン Pro", "category": "オーディオ", "price": 12800, "stock": 45, "description": "最新ノイズキャンセリング技術搭載、最大30時間連続再生可能"}
+{"id": 2, "name": "スマートウォッチ X5", "category": "ウェアラブル", "price": 38500, "stock": 23, "description": "健康管理機能充実、GPS内蔵、防水仕様"}
+{"id": 3, "name": "4Kウェブカメラ", "category": "PC周辺機器", "price": 8900, "stock": 67, "description": "高画質4K対応、自動フォーカス、広角レンズ搭載"}
+{"id": 4, "name": "ポータブル充電器 20000mAh", "category": "モバイルアクセサリー", "price": 4500, "stock": 112, "description": "大容量、急速充電対応、複数デバイス同時充電可能"}
+{"id": 5, "name": "ゲーミングキーボード RGB", "category": "PC周辺機器", "price": 15600, "stock": 34, "description": "メカニカルスイッチ、RGBバックライト、プログラマブルキー"}
+{"id": 6, "name": "スマートスピーカー Mini", "category": "スマートホーム", "price": 5800, "stock": 89, "description": "音声アシスタント搭載、コンパクトサイズ、高音質"}
+{"id": 7, "name": "USB-Cハブ 7in1", "category": "PC周辺機器", "price": 6200, "stock": 56, "description": "7ポート搭載、4K HDMI出力、高速データ転送"}
+{"id": 8, "name": "ワイヤレスマウス エルゴノミック", "category": "PC周辺機器", "price": 3200, "stock": 78, "description": "人間工学設計、長時間使用でも疲れにくい、静音クリック"}
+{"id": 9, "name": "スマートLED電球 3個セット", "category": "スマートホーム", "price": 7500, "stock": 41, "description": "アプリ制御、1600万色対応、省エネ設計"}
+{"id": 10, "name": "ノートPCスタンド", "category": "PC周辺機器", "price": 2800, "stock": 95, "description": "角度調整可能、アルミニウム製、放熱性能優秀"}
+{"id": 11, "name": "Bluetoothスピーカー 防水", "category": "オーディオ", "price": 9800, "stock": 52, "description": "IPX7防水、360度サウンド、最大24時間再生"}
+{"id": 12, "name": "タブレットケース 多機能", "category": "タブレットアクセサリー", "price": 3500, "stock": 73, "description": "スタンド機能付き、ペンホルダー内蔵、衝撃吸収"}
+{"id": 13, "name": "ワイヤレス充電パッド", "category": "モバイルアクセサリー", "price": 2200, "stock": 126, "description": "Qi対応、急速充電、過充電防止機能"}
+{"id": 14, "name": "外付けSSD 1TB", "category": "ストレージ", "price": 12000, "stock": 38, "description": "高速転送、コンパクト設計、暗号化機能搭載"}
+{"id": 15, "name": "VRヘッドセット", "category": "VR/AR", "price": 45000, "stock": 15, "description": "高解像度ディスプレイ、ワイヤレス接続、軽量設計"}
