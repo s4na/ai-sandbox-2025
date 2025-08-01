@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>架空の日本地図座標プロッター</title>
+    <title>架空の世界地図座標プロッター</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -64,32 +64,48 @@
             font-weight: bold;
             border-bottom: 2px solid #f57c00;
         }
+        
+        #regenerateBtn {
+            width: 100%;
+            padding: 10px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #regenerateBtn:hover {
+            background-color: #1976D2;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <div class="disclaimer">架空の座標データ</div>
         <h2>座標リスト (100件)</h2>
+        <button id="regenerateBtn">ランダム座標を再生成</button>
         <ul id="coordinateList"></ul>
     </div>
     <div id="map"></div>
     
     <script>
-        // 地図の初期化（日本の中心付近）
-        const map = L.map('map').setView([36.5, 138.0], 5);
+        // 地図の初期化（世界地図の中心）
+        const map = L.map('map').setView([0, 0], 2);
         
         // OpenStreetMapタイルの追加
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors | 架空のデータ表示'
         }).addTo(map);
         
-        // 日本の境界内でランダムな座標を生成
+        // 世界中でランダムな座標を生成
         function generateRandomCoordinates() {
             const coordinates = [];
             for (let i = 0; i < 100; i++) {
-                // 日本の大まかな範囲内でランダムな座標を生成
-                const lat = 24 + Math.random() * 22; // 24°〜46°
-                const lng = 123 + Math.random() * 25; // 123°〜148°
+                // 世界中でランダムな座標を生成
+                const lat = -90 + Math.random() * 180; // -90°〜90°
+                const lng = -180 + Math.random() * 360; // -180°〜180°
                 coordinates.push({
                     id: i,
                     lat: lat.toFixed(6),
@@ -100,8 +116,8 @@
         }
         
         // 座標データを生成
-        const coordinates = generateRandomCoordinates();
-        const markers = [];
+        let coordinates = generateRandomCoordinates();
+        let markers = [];
         let selectedIndex = -1;
         
         // カスタムアイコンの作成（赤いピン）
@@ -112,29 +128,6 @@
             iconAnchor: [12, 41],
             popupAnchor: [1, -34],
             shadowSize: [41, 41]
-        });
-        
-        // 地図にマーカーを追加
-        coordinates.forEach((coord, index) => {
-            const marker = L.marker([coord.lat, coord.lng], { icon: redIcon })
-                .addTo(map)
-                .bindPopup(`<strong>架空の座標 #${index + 1}</strong><br>緯度: ${coord.lat}<br>経度: ${coord.lng}`);
-            
-            marker.on('click', () => {
-                selectCoordinate(index);
-            });
-            
-            markers.push(marker);
-        });
-        
-        // サイドバーのリストを作成
-        const list = document.getElementById('coordinateList');
-        coordinates.forEach((coord, index) => {
-            const li = document.createElement('li');
-            li.textContent = `#${index + 1}: ${coord.lat}, ${coord.lng}`;
-            li.dataset.index = index;
-            li.onclick = () => selectCoordinate(index);
-            list.appendChild(li);
         });
         
         // 座標を選択する関数
@@ -153,8 +146,53 @@
             markers[index].openPopup();
             
             // 地図をその座標にズーム
-            map.setView([coordinates[index].lat, coordinates[index].lng], 8);
+            map.setView([coordinates[index].lat, coordinates[index].lng], 6);
         }
+        
+        // マーカーとリストを更新する関数
+        function updateMarkersAndList() {
+            // 既存のマーカーをクリア
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // 新しいマーカーを追加
+            coordinates.forEach((coord, index) => {
+                const marker = L.marker([coord.lat, coord.lng], { icon: redIcon })
+                    .addTo(map)
+                    .bindPopup(`<strong>架空の座標 #${index + 1}</strong><br>緯度: ${coord.lat}<br>経度: ${coord.lng}`);
+                
+                marker.on('click', () => {
+                    selectCoordinate(index);
+                });
+                
+                markers.push(marker);
+            });
+            
+            // サイドバーのリストを更新
+            const list = document.getElementById('coordinateList');
+            list.innerHTML = '';
+            coordinates.forEach((coord, index) => {
+                const li = document.createElement('li');
+                li.textContent = `#${index + 1}: ${coord.lat}, ${coord.lng}`;
+                li.dataset.index = index;
+                li.onclick = () => selectCoordinate(index);
+                list.appendChild(li);
+            });
+            
+            // 選択をリセット
+            selectedIndex = -1;
+        }
+        
+        // 再生成ボタンのイベントリスナー
+        document.getElementById('regenerateBtn').addEventListener('click', () => {
+            coordinates = generateRandomCoordinates();
+            updateMarkersAndList();
+            // 世界地図全体を表示
+            map.setView([0, 0], 2);
+        });
+        
+        // 初期表示
+        updateMarkersAndList();
         
         // キーボードイベントの処理
         document.addEventListener('keydown', (e) => {
