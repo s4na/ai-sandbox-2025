@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の日本地図座標プロッター</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #sidebar {
+            width: 300px;
+            background-color: #f0f0f0;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        #sidebar h2 {
+            background-color: #333;
+            color: white;
+            margin: 0;
+            padding: 15px;
+            font-size: 18px;
+        }
+        
+        #coordinateList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        #coordinateList li {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #coordinateList li:hover {
+            background-color: #e0e0e0;
+        }
+        
+        #coordinateList li.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        .disclaimer {
+            background-color: #ffeb3b;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #f57c00;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="disclaimer">架空の座標データ</div>
+        <h2>座標リスト (100件)</h2>
+        <ul id="coordinateList"></ul>
+    </div>
+    <div id="map"></div>
+    
+    <script>
+        // 地図の初期化（日本の中心付近）
+        const map = L.map('map').setView([36.5, 138.0], 5);
+        
+        // OpenStreetMapタイルの追加
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors | 架空のデータ表示'
+        }).addTo(map);
+        
+        // 日本の境界内でランダムな座標を生成
+        function generateRandomCoordinates() {
+            const coordinates = [];
+            for (let i = 0; i < 100; i++) {
+                // 日本の大まかな範囲内でランダムな座標を生成
+                const lat = 24 + Math.random() * 22; // 24°〜46°
+                const lng = 123 + Math.random() * 25; // 123°〜148°
+                coordinates.push({
+                    id: i,
+                    lat: lat.toFixed(6),
+                    lng: lng.toFixed(6)
+                });
+            }
+            return coordinates;
+        }
+        
+        // 座標データを生成
+        const coordinates = generateRandomCoordinates();
+        const markers = [];
+        let selectedIndex = -1;
+        
+        // カスタムアイコンの作成（赤いピン）
+        const redIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+        
+        // 地図にマーカーを追加
+        coordinates.forEach((coord, index) => {
+            const marker = L.marker([coord.lat, coord.lng], { icon: redIcon })
+                .addTo(map)
+                .bindPopup(`<strong>架空の座標 #${index + 1}</strong><br>緯度: ${coord.lat}<br>経度: ${coord.lng}`);
+            
+            marker.on('click', () => {
+                selectCoordinate(index);
+            });
+            
+            markers.push(marker);
+        });
+        
+        // サイドバーのリストを作成
+        const list = document.getElementById('coordinateList');
+        coordinates.forEach((coord, index) => {
+            const li = document.createElement('li');
+            li.textContent = `#${index + 1}: ${coord.lat}, ${coord.lng}`;
+            li.dataset.index = index;
+            li.onclick = () => selectCoordinate(index);
+            list.appendChild(li);
+        });
+        
+        // 座標を選択する関数
+        function selectCoordinate(index) {
+            // 前の選択を解除
+            if (selectedIndex >= 0) {
+                list.children[selectedIndex].classList.remove('selected');
+            }
+            
+            // 新しい選択を適用
+            selectedIndex = index;
+            list.children[index].classList.add('selected');
+            list.children[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // マーカーのポップアップを開く
+            markers[index].openPopup();
+            
+            // 地図をその座標にズーム
+            map.setView([coordinates[index].lat, coordinates[index].lng], 8);
+        }
+        
+        // キーボードイベントの処理
+        document.addEventListener('keydown', (e) => {
+            if (selectedIndex === -1 && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                // 何も選択されていない場合は最初の要素を選択
+                selectCoordinate(0);
+                return;
+            }
+            
+            if (e.key === 'ArrowDown' && selectedIndex < coordinates.length - 1) {
+                selectCoordinate(selectedIndex + 1);
+            } else if (e.key === 'ArrowUp' && selectedIndex > 0) {
+                selectCoordinate(selectedIndex - 1);
+            }
+        });
+    </script>
+</body>
+</html>
