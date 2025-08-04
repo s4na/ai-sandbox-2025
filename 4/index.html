@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空のインタラクティブカラーエクスペリエンス</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background: #0a0a0a;
+            cursor: none;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+            animation: fadeIn 2s ease-out;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.1em;
+            animation: fadeIn 2s ease-out 0.5s both;
+        }
+
+        .cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease-out;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.05s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            animation: fadeIn 2s ease-out 1s both;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="content">
+        <h1>架空の色彩体験</h1>
+        <p class="subtitle">マウスで触れて、色の世界を探索してください</p>
+    </div>
+    
+    <p class="instructions">クリックしてドラッグすると、より鮮やかな軌跡が描かれます</p>
+    
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const cursor = document.querySelector('.cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+
+        let width, height;
+        let mouseX = 0, mouseY = 0;
+        let isMouseDown = false;
+        let particles = [];
+        let colorPhase = 0;
+        let trails = [];
+
+        // 高級感のあるカラーパレット
+        const luxuryColors = [
+            { r: 147, g: 51, b: 234 },   // Royal Purple
+            { r: 59, g: 130, b: 246 },   // Electric Blue
+            { r: 236, g: 72, b: 153 },   // Hot Pink
+            { r: 250, g: 204, b: 21 },   // Golden Yellow
+            { r: 34, g: 197, b: 94 },    // Emerald Green
+            { r: 239, g: 68, b: 68 },    // Ruby Red
+            { r: 99, g: 102, b: 241 },   // Indigo
+            { r: 245, g: 158, b: 11 }    // Amber
+        ];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        function lerp(start, end, t) {
+            return start * (1 - t) + end * t;
+        }
+
+        function getGradientColor(x, y, phase) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const dx = x - centerX;
+            const dy = y - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+            
+            const colorIndex1 = Math.floor(phase) % luxuryColors.length;
+            const colorIndex2 = (colorIndex1 + 1) % luxuryColors.length;
+            const t = phase % 1;
+            
+            const color1 = luxuryColors[colorIndex1];
+            const color2 = luxuryColors[colorIndex2];
+            
+            const r = lerp(color1.r, color2.r, t);
+            const g = lerp(color1.g, color2.g, t);
+            const b = lerp(color1.b, color2.b, t);
+            
+            const intensity = 1 - (distance / maxDistance) * 0.5;
+            
+            return {
+                r: Math.floor(r * intensity),
+                g: Math.floor(g * intensity),
+                b: Math.floor(b * intensity)
+            };
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 1;
+                this.decay = 0.01;
+                this.size = Math.random() * 3 + 1;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Trail {
+            constructor(x, y, color) {
+                this.points = [{x, y}];
+                this.color = color;
+                this.life = 1;
+                this.decay = 0.02;
+            }
+
+            addPoint(x, y) {
+                this.points.push({x, y});
+                if (this.points.length > 30) {
+                    this.points.shift();
+                }
+            }
+
+            update() {
+                this.life -= this.decay;
+            }
+
+            draw() {
+                if (this.points.length < 2) return;
+                
+                ctx.save();
+                ctx.globalAlpha = this.life * 0.6;
+                ctx.strokeStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+                
+                ctx.beginPath();
+                ctx.moveTo(this.points[0].x, this.points[0].y);
+                
+                for (let i = 1; i < this.points.length; i++) {
+                    const cp1x = (this.points[i].x + this.points[i - 1].x) / 2;
+                    const cp1y = (this.points[i].y + this.points[i - 1].y) / 2;
+                    ctx.quadraticCurveTo(this.points[i - 1].x, this.points[i - 1].y, cp1x, cp1y);
+                }
+                
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function createParticles(x, y, count = 5) {
+            const color = getGradientColor(x, y, colorPhase);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, width, height);
+            
+            // 背景のグラデーション効果
+            const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 300);
+            const color = getGradientColor(mouseX, mouseY, colorPhase);
+            gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.1)`);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // トレイルの更新と描画
+            trails = trails.filter(trail => {
+                trail.update();
+                if (trail.life > 0) {
+                    trail.draw();
+                    return true;
+                }
+                return false;
+            });
+            
+            // パーティクルの更新と描画
+            particles = particles.filter(particle => {
+                particle.update();
+                if (particle.life > 0) {
+                    particle.draw();
+                    return true;
+                }
+                return false;
+            });
+            
+            colorPhase += 0.01;
+            
+            requestAnimationFrame(animate);
+        }
+
+        // マウスイベント
+        let currentTrail = null;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            cursor.style.left = mouseX - 20 + 'px';
+            cursor.style.top = mouseY - 20 + 'px';
+            cursorDot.style.left = mouseX - 4 + 'px';
+            cursorDot.style.top = mouseY - 4 + 'px';
+            
+            if (isMouseDown) {
+                createParticles(mouseX, mouseY, 3);
+                if (currentTrail) {
+                    currentTrail.addPoint(mouseX, mouseY);
+                }
+            } else {
+                if (Math.random() > 0.8) {
+                    createParticles(mouseX, mouseY, 1);
+                }
+            }
+        });
+
+        window.addEventListener('mousedown', () => {
+            isMouseDown = true;
+            cursor.style.transform = 'scale(0.8)';
+            const color = getGradientColor(mouseX, mouseY, colorPhase);
+            currentTrail = new Trail(mouseX, mouseY, color);
+            trails.push(currentTrail);
+            createParticles(mouseX, mouseY, 10);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+            cursor.style.transform = 'scale(1)';
+            currentTrail = null;
+        });
+
+        window.addEventListener('resize', resize);
+
+        resize();
+        animate();
+    </script>
+</body>
+</html>
