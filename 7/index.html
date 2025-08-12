@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の音楽データビジュアライザー - SoundWave Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #FF006E, #8338EC, #3A86FF);
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .file-input-wrapper {
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #FF006E, #8338EC);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-right: 20px;
+        }
+        
+        .file-input-wrapper:hover {
+            transform: scale(1.05);
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3A86FF, #06FFB4);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        .visualizer-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .viz-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .viz-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #06FFB4;
+        }
+        
+        .waveform-container {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .waveform-bar {
+            width: 3px;
+            background: linear-gradient(to top, #FF006E, #06FFB4);
+            margin: 0 2px;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+        
+        @keyframes wave {
+            0%, 100% { height: 20px; }
+            50% { height: 100px; }
+        }
+        
+        .frequency-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 250px;
+            justify-content: space-around;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .freq-bar {
+            width: 20px;
+            background: linear-gradient(to top, #8338EC, #FF006E);
+            border-radius: 10px 10px 0 0;
+            transition: height 0.3s ease;
+        }
+        
+        .spectrum-analyzer {
+            height: 300px;
+            background: linear-gradient(180deg, rgba(58, 134, 255, 0.3) 0%, rgba(255, 0, 110, 0.3) 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .spectrum-line {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 2px;
+            background: #06FFB4;
+            box-shadow: 0 0 10px #06FFB4;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(20); }
+        }
+        
+        .circular-viz {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .circle {
+            position: absolute;
+            border: 3px solid;
+            border-radius: 50%;
+            animation: rotate 4s linear infinite;
+        }
+        
+        .circle:nth-child(1) {
+            width: 100%;
+            height: 100%;
+            border-color: #FF006E;
+            animation-duration: 3s;
+        }
+        
+        .circle:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-color: #8338EC;
+            animation-duration: 4s;
+            animation-direction: reverse;
+        }
+        
+        .circle:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            border-color: #3A86FF;
+            animation-duration: 5s;
+        }
+        
+        .circle:nth-child(4) {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            border-color: #06FFB4;
+            animation-duration: 6s;
+            animation-direction: reverse;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FF006E, #06FFB4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            margin-top: 10px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        
+        .playing-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+        
+        .playing-indicator span {
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #06FFB4;
+            margin: 0 2px;
+            animation: sound 0.8s ease-in-out infinite;
+        }
+        
+        .playing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .playing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        .playing-indicator span:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+        
+        @keyframes sound {
+            0%, 100% { height: 5px; }
+            50% { height: 25px; }
+        }
+        
+        .genre-detector {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .genre-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .genre-tag {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #8338EC, #3A86FF);
+            font-size: 14px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 SoundWave Analytics</h1>
+        <p class="subtitle">架空のAI音楽データビジュアライザー - 音楽を視覚的に体験</p>
+    </div>
+    
+    <div class="container">
+        <div class="controls">
+            <label class="file-input-wrapper">
+                <input type="file" accept="audio/*" id="audioFile">
+                架空の音楽ファイルを選択
+            </label>
+            <button onclick="startVisualization()">ビジュアライゼーション開始</button>
+            <button onclick="stopVisualization()">停止</button>
+            <div class="playing-indicator" id="playingIndicator" style="display: none;">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="visualizer-section">
+            <div class="viz-card">
+                <h3 class="viz-title">🌊 波形ビジュアライザー</h3>
+                <div class="waveform-container" id="waveform">
+                    <!-- 動的に生成される波形バー -->
+                </div>
+            </div>
+            
+            <div class="viz-card">
+                <h3 class="viz-title">📊 周波数スペクトラム</h3>
+                <div class="frequency-bars" id="frequencyBars">
+                    <!-- 動的に生成される周波数バー -->
+                </div>
+            </div>
+            
+            <div class="viz-card">
+                <h3 class="viz-title">🎯 サーキュラービジュアライザー</h3>
+                <div class="circular-viz">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                </div>
+            </div>
+            
+            <div class="viz-card">
+                <h3 class="viz-title">🌈 スペクトラムアナライザー</h3>
+                <div class="spectrum-analyzer">
+                    <div class="spectrum-line"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="bpm">128</div>
+                <div class="stat-label">BPM (テンポ)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="frequency">440Hz</div>
+                <div class="stat-label">主要周波数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="energy">75%</div>
+                <div class="stat-label">エネルギーレベル</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="key">C Major</div>
+                <div class="stat-label">推定キー</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="duration">3:45</div>
+                <div class="stat-label">楽曲時間</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dynamics">65dB</div>
+                <div class="stat-label">ダイナミクス</div>
+            </div>
+        </div>
+        
+        <div class="genre-detector">
+            <h3 style="color: #06FFB4; margin-bottom: 10px;">🎸 AI推定ジャンル分析</h3>
+            <div class="genre-tags" id="genreTags">
+                <span class="genre-tag">エレクトロニック</span>
+                <span class="genre-tag">ダンス</span>
+                <span class="genre-tag">ポップ</span>
+                <span class="genre-tag">実験的</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let animationInterval;
+        let waveformInterval;
+        
+        function createWaveformBars() {
+            const container = document.getElementById('waveform');
+            container.innerHTML = '';
+            const barCount = 60;
+            
+            for (let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'waveform-bar';
+                bar.style.animationDelay = `${i * 0.05}s`;
+                container.appendChild(bar);
+            }
+        }
+        
+        function createFrequencyBars() {
+            const container = document.getElementById('frequencyBars');
+            container.innerHTML = '';
+            const barCount = 16;
+            
+            for (let i = 0; i < barCount; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'freq-bar';
+                bar.style.height = `${Math.random() * 80 + 20}%`;
+                container.appendChild(bar);
+            }
+        }
+        
+        function animateFrequencyBars() {
+            const bars = document.querySelectorAll('.freq-bar');
+            bars.forEach(bar => {
+                const height = Math.random() * 80 + 20;
+                bar.style.height = `${height}%`;
+            });
+        }
+        
+        function updateStats() {
+            // ランダムな統計値を生成
+            document.getElementById('bpm').textContent = Math.floor(Math.random() * 80 + 80);
+            document.getElementById('frequency').textContent = `${Math.floor(Math.random() * 500 + 200)}Hz`;
+            document.getElementById('energy').textContent = `${Math.floor(Math.random() * 40 + 60)}%`;
+            
+            const keys = ['C Major', 'G Major', 'D Minor', 'A Minor', 'F Major', 'E Minor'];
+            document.getElementById('key').textContent = keys[Math.floor(Math.random() * keys.length)];
+            
+            const minutes = Math.floor(Math.random() * 3 + 2);
+            const seconds = Math.floor(Math.random() * 60);
+            document.getElementById('duration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('dynamics').textContent = `${Math.floor(Math.random() * 30 + 50)}dB`;
+        }
+        
+        function updateGenreTags() {
+            const allGenres = [
+                'エレクトロニック', 'ダンス', 'ポップ', '実験的', 'アンビエント',
+                'テクノ', 'ハウス', 'トランス', 'ドラムンベース', 'チルアウト',
+                'ダブステップ', 'フューチャーベース', 'シンセウェーブ'
+            ];
+            
+            const selectedGenres = allGenres.sort(() => 0.5 - Math.random()).slice(0, 4);
+            const container = document.getElementById('genreTags');
+            container.innerHTML = selectedGenres.map(genre => 
+                `<span class="genre-tag">${genre}</span>`
+            ).join('');
+        }
+        
+        function startVisualization() {
+            // 既存のアニメーションをクリア
+            stopVisualization();
+            
+            // インジケーター表示
+            document.getElementById('playingIndicator').style.display = 'inline-flex';
+            
+            // 波形とバーを生成
+            createWaveformBars();
+            createFrequencyBars();
+            
+            // 統計情報を更新
+            updateStats();
+            updateGenreTags();
+            
+            // 周波数バーのアニメーション
+            animationInterval = setInterval(() => {
+                animateFrequencyBars();
+            }, 200);
+            
+            // 統計情報の定期更新
+            waveformInterval = setInterval(() => {
+                updateStats();
+            }, 3000);
+        }
+        
+        function stopVisualization() {
+            document.getElementById('playingIndicator').style.display = 'none';
+            
+            if (animationInterval) {
+                clearInterval(animationInterval);
+            }
+            if (waveformInterval) {
+                clearInterval(waveformInterval);
+            }
+        }
+        
+        // ファイル選択時の処理
+        document.getElementById('audioFile').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                console.log('架空の音楽ファイルが選択されました:', e.target.files[0].name);
+                startVisualization();
+            }
+        });
+        
+        // 初期表示
+        createWaveformBars();
+        createFrequencyBars();
+    </script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の感情分析ダッシュボード - EmotionScope AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-title {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .emotion-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .emotion-label {
+            width: 80px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .bar-container {
+            flex: 1;
+            height: 25px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+            border-radius: 12px;
+        }
+        
+        .percentage {
+            font-weight: bold;
+            color: #333;
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        .sentiment-score {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .score-display {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .sentiment-label {
+            font-size: 1.5em;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .time-series-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 200px;
+            justify-content: space-around;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 10px;
+        }
+        
+        .chart-bar {
+            width: 30px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 5px 5px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+        
+        .chart-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .keywords-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .keyword-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 EmotionScope AI</h1>
+        <p class="subtitle">架空のAI感情分析ダッシュボード - テキストから感情を可視化</p>
+        
+        <div class="input-section">
+            <h3>分析したいテキストを入力してください</h3>
+            <textarea id="textInput" placeholder="例：今日は素晴らしい一日でした！新しいプロジェクトが始まり、チーム全員がやる気に満ちています。"></textarea>
+            <button onclick="analyzeEmotion()">感情分析を開始</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <span class="spinner"></span>
+            AIが感情を分析中...
+        </div>
+        
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="metric-card">
+                <div class="metric-title">🎯 基本感情スコア</div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">😊 喜び</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="joy-bar" style="background: #FFD700; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="joy-percent">0%</span>
+                </div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">😢 悲しみ</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="sadness-bar" style="background: #4169E1; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="sadness-percent">0%</span>
+                </div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">😠 怒り</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="anger-bar" style="background: #DC143C; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="anger-percent">0%</span>
+                </div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">😨 恐怖</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="fear-bar" style="background: #800080; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="fear-percent">0%</span>
+                </div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">😮 驚き</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="surprise-bar" style="background: #FF69B4; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="surprise-percent">0%</span>
+                </div>
+                <div class="emotion-bar">
+                    <span class="emotion-label">🤢 嫌悪</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="disgust-bar" style="background: #708090; width: 0%;"></div>
+                    </div>
+                    <span class="percentage" id="disgust-percent">0%</span>
+                </div>
+            </div>
+            
+            <div class="metric-card sentiment-score">
+                <div class="metric-title">📊 感情極性スコア</div>
+                <div class="score-display" id="sentiment-score">0.00</div>
+                <div class="sentiment-label" id="sentiment-label">中立</div>
+                <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                    -1.0（ネガティブ）〜 +1.0（ポジティブ）
+                </p>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">📈 時系列感情推移</div>
+                <div class="time-series-chart" id="timeChart">
+                    <div class="chart-bar" style="height: 20%;">
+                        <span class="chart-label">開始</span>
+                    </div>
+                    <div class="chart-bar" style="height: 40%;">
+                        <span class="chart-label">前半</span>
+                    </div>
+                    <div class="chart-bar" style="height: 60%;">
+                        <span class="chart-label">中盤</span>
+                    </div>
+                    <div class="chart-bar" style="height: 80%;">
+                        <span class="chart-label">後半</span>
+                    </div>
+                    <div class="chart-bar" style="height: 70%;">
+                        <span class="chart-label">終了</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">🔑 感情キーワード</div>
+                <div class="keywords-section" id="keywords">
+                    <span class="keyword-tag">ポジティブ</span>
+                    <span class="keyword-tag">希望的</span>
+                    <span class="keyword-tag">前向き</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">🧠 詳細分析</div>
+                <div style="color: #666; line-height: 1.8;">
+                    <p><strong>主要感情：</strong><span id="dominant-emotion">喜び</span></p>
+                    <p><strong>感情の複雑度：</strong><span id="complexity">中程度</span></p>
+                    <p><strong>感情の安定性：</strong><span id="stability">安定</span></p>
+                    <p><strong>推奨アクション：</strong><span id="recommendation">このポジティブな感情を維持しましょう</span></p>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-title">🎨 感情カラーマップ</div>
+                <div style="height: 100px; border-radius: 10px; background: linear-gradient(90deg, #FFD700 0%, #87CEEB 50%, #98FB98 100%); margin-top: 15px;"></div>
+                <p style="text-align: center; margin-top: 10px; color: #666;">現在の感情状態の色彩表現</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function analyzeEmotion() {
+            const text = document.getElementById('textInput').value;
+            if (!text.trim()) {
+                alert('テキストを入力してください');
+                return;
+            }
+            
+            // ローディング表示
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('dashboard').style.display = 'none';
+            
+            // 架空のAI分析をシミュレート
+            setTimeout(() => {
+                // ランダムな感情スコアを生成
+                const emotions = {
+                    joy: Math.random() * 100,
+                    sadness: Math.random() * 30,
+                    anger: Math.random() * 20,
+                    fear: Math.random() * 25,
+                    surprise: Math.random() * 40,
+                    disgust: Math.random() * 15
+                };
+                
+                // 感情バーを更新
+                Object.keys(emotions).forEach(emotion => {
+                    const value = emotions[emotion];
+                    document.getElementById(`${emotion}-bar`).style.width = `${value}%`;
+                    document.getElementById(`${emotion}-percent`).textContent = `${Math.round(value)}%`;
+                });
+                
+                // 感情極性スコアを計算
+                const sentimentScore = ((emotions.joy - emotions.sadness - emotions.anger - emotions.fear + emotions.surprise - emotions.disgust) / 100).toFixed(2);
+                document.getElementById('sentiment-score').textContent = sentimentScore;
+                
+                // 感情ラベルを設定
+                const sentimentLabel = document.getElementById('sentiment-label');
+                if (sentimentScore > 0.3) {
+                    sentimentLabel.textContent = 'ポジティブ';
+                    sentimentLabel.style.background = '#98FB98';
+                    sentimentLabel.style.color = '#2E7D32';
+                } else if (sentimentScore < -0.3) {
+                    sentimentLabel.textContent = 'ネガティブ';
+                    sentimentLabel.style.background = '#FFB6C1';
+                    sentimentLabel.style.color = '#C62828';
+                } else {
+                    sentimentLabel.textContent = '中立';
+                    sentimentLabel.style.background = '#E0E0E0';
+                    sentimentLabel.style.color = '#424242';
+                }
+                
+                // 時系列チャートを更新
+                const chartBars = document.querySelectorAll('.chart-bar');
+                chartBars.forEach(bar => {
+                    bar.style.height = `${20 + Math.random() * 60}%`;
+                });
+                
+                // キーワードを生成
+                const keywords = ['ポジティブ', '希望的', '前向き', '楽観的', '活発', '創造的'];
+                const selectedKeywords = keywords.sort(() => 0.5 - Math.random()).slice(0, 4);
+                const keywordsContainer = document.getElementById('keywords');
+                keywordsContainer.innerHTML = selectedKeywords.map(keyword => 
+                    `<span class="keyword-tag">${keyword}</span>`
+                ).join('');
+                
+                // 詳細分析を更新
+                const dominantEmotion = Object.keys(emotions).reduce((a, b) => emotions[a] > emotions[b] ? a : b);
+                const emotionLabels = {
+                    joy: '喜び',
+                    sadness: '悲しみ',
+                    anger: '怒り',
+                    fear: '恐怖',
+                    surprise: '驚き',
+                    disgust: '嫌悪'
+                };
+                document.getElementById('dominant-emotion').textContent = emotionLabels[dominantEmotion];
+                
+                // 複雑度を計算
+                const variance = Object.values(emotions).reduce((sum, val) => sum + val, 0) / 6;
+                document.getElementById('complexity').textContent = variance > 30 ? '高い' : variance > 15 ? '中程度' : '低い';
+                
+                // 安定性を評価
+                document.getElementById('stability').textContent = Math.random() > 0.5 ? '安定' : '変動的';
+                
+                // 推奨アクション
+                const recommendations = [
+                    'このポジティブな感情を維持しましょう',
+                    '深呼吸をして、リラックスすることをお勧めします',
+                    '感情のバランスが取れています',
+                    '前向きな活動を続けることをお勧めします'
+                ];
+                document.getElementById('recommendation').textContent = recommendations[Math.floor(Math.random() * recommendations.length)];
+                
+                // ローディングを非表示にしてダッシュボードを表示
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('dashboard').style.display = 'grid';
+            }, 2000);
+        }
+        
+        // サンプルテキストを自動入力
+        document.getElementById('textInput').value = '今日は素晴らしい一日でした！新しいプロジェクトが始まり、チーム全員がやる気に満ちています。困難な課題もありますが、みんなで協力して乗り越えていけると信じています。';
+    </script>
+</body>
+</html>
