@@ -402,108 +402,25 @@
         let translator = null;
         let isModelReady = false;
         
-        // 簡易的な日本語→英語変換辞書
-        const japaneseToEnglish = {
-            // ポジティブな表現
-            '素晴らしい': 'wonderful',
-            'すばらしい': 'wonderful',
-            '良い': 'good',
-            'いい': 'good',
-            '嬉しい': 'happy',
-            'うれしい': 'happy',
-            '楽しい': 'fun',
-            'たのしい': 'fun',
-            '幸せ': 'happy',
-            'しあわせ': 'happy',
-            '最高': 'best',
-            'さいこう': 'best',
-            'やる気': 'motivated',
-            '希望': 'hope',
-            '成功': 'success',
-            '達成': 'achievement',
-            '喜び': 'joy',
-            '満足': 'satisfied',
-            '感謝': 'grateful',
-            '優秀': 'excellent',
-            '完璧': 'perfect',
-            
-            // ネガティブな表現
-            '悲しい': 'sad',
-            'かなしい': 'sad',
-            '辛い': 'painful',
-            'つらい': 'painful',
-            '困難': 'difficult',
-            '大変': 'hard',
-            '問題': 'problem',
-            '失敗': 'failure',
-            '不安': 'anxious',
-            '心配': 'worried',
-            '怒り': 'angry',
-            '疲れ': 'tired',
-            'ストレス': 'stress',
-            '最悪': 'worst',
-            
-            // 中立的な表現
-            '普通': 'normal',
-            'ふつう': 'normal',
-            '課題': 'challenge',
-            '協力': 'cooperation',
-            '一緒': 'together',
-            'チーム': 'team',
-            'プロジェクト': 'project',
-            '仕事': 'work',
-            '今日': 'today',
-            '明日': 'tomorrow',
-            '昨日': 'yesterday',
-            '新しい': 'new',
-            'みんな': 'everyone',
-            '全員': 'everyone',
-            '信じて': 'believe',
-            '乗り越え': 'overcome',
-            '始まり': 'start',
-            '一日': 'day'
-        };
-        
-        // 日本語テキストを簡易的に英語に変換
-        function simpleTranslate(text) {
-            let translatedText = text;
-            
-            // 辞書の単語を置換
-            Object.entries(japaneseToEnglish).forEach(([japanese, english]) => {
-                const regex = new RegExp(japanese, 'g');
-                translatedText = translatedText.replace(regex, english);
-            });
-            
-            // 一般的な文末表現を変換
-            translatedText = translatedText
-                .replace(/でした[。！]?/g, ' was.')
-                .replace(/です[。！]?/g, ' is.')
-                .replace(/ます[。！]?/g, '.')
-                .replace(/ました[。！]?/g, '.')
-                .replace(/ですが/g, ' but')
-                .replace(/けれど/g, ' but')
-                .replace(/しかし/g, ' however')
-                .replace(/そして/g, ' and')
-                .replace(/[。]/g, '.')
-                .replace(/[！]/g, '!')
-                .replace(/[？]/g, '?')
-                .replace(/[、]/g, ',');
-            
-            return translatedText;
-        }
-        
         // モデルの初期化
         async function initializeModel() {
             const statusElement = document.getElementById('modelStatus');
             const analyzeButton = document.getElementById('analyzeButton');
             
             try {
-                statusElement.textContent = '🤖 感情分析モデルを読み込み中... (初回は数分かかる場合があります)';
+                statusElement.textContent = '🤖 AIモデルを読み込み中... (初回は数分かかる場合があります)';
                 statusElement.className = 'model-status loading';
                 analyzeButton.textContent = 'モデル読み込み中...';
                 analyzeButton.disabled = true;
                 
+                // 翻訳モデルを読み込み（日本語→英語）
+                statusElement.textContent = '🌐 翻訳モデルを読み込み中...';
+                translator = await pipeline('translation', 'Xenova/nllb-200-distilled-600M', {
+                    quantized: true
+                });
+                
                 // 感情分析パイプラインを作成
+                statusElement.textContent = '🎭 感情分析モデルを読み込み中...';
                 sentimentAnalyzer = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
                 
                 isModelReady = true;
@@ -530,9 +447,14 @@
                 const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text);
                 let textToAnalyze = text;
                 
-                if (hasJapanese) {
-                    // 日本語の場合は簡易翻訳
-                    textToAnalyze = simpleTranslate(text);
+                if (hasJapanese && translator) {
+                    // 日本語の場合はAIで翻訳
+                    console.log('日本語を検出。翻訳中...');
+                    const translationResult = await translator(text, {
+                        src_lang: 'jpn_Jpan',  // 日本語
+                        tgt_lang: 'eng_Latn'   // 英語
+                    });
+                    textToAnalyze = translationResult[0].translation_text;
                     console.log('翻訳結果:', textToAnalyze);
                 }
                 
