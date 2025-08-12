@@ -401,19 +401,12 @@
         let sentimentAnalyzer = null;
         let isModelReady = false;
         
-        // LibreTranslate APIを使った軽量な翻訳関数
+        // MyMemory Translation APIを使った軽量な翻訳関数（CORS対応）
         async function translateText(text) {
             try {
-                const response = await fetch('https://libretranslate.de/translate', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        q: text,
-                        source: 'ja',
-                        target: 'en',
-                        format: 'text'
-                    }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                // MyMemory APIはCORSに対応していて、無料で使える
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ja|en`;
+                const response = await fetch(url);
                 
                 if (!response.ok) {
                     console.error('翻訳APIエラー:', response.status);
@@ -421,7 +414,12 @@
                 }
                 
                 const data = await response.json();
-                return data.translatedText;
+                if (data.responseStatus === 200) {
+                    return data.responseData.translatedText;
+                } else {
+                    console.error('翻訳エラー:', data.responseDetails);
+                    return text;
+                }
             } catch (error) {
                 console.error('翻訳エラー:', error);
                 return text; // エラー時は元のテキストを返す
