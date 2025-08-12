@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の気象データ予測システム - WeatherAI Forecast</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2C3E50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7F8C8D;
+            font-style: italic;
+        }
+        
+        .location-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .location-input {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .weather-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .weather-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .weather-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            color: #2C3E50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .current-weather {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+        }
+        
+        .weather-main {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px 0;
+        }
+        
+        .temperature-display {
+            text-align: center;
+        }
+        
+        .temp-value {
+            font-size: 4em;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+        
+        .weather-icon {
+            font-size: 5em;
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .detail-item {
+            text-align: center;
+            padding: 10px;
+            background: #F8F9FA;
+            border-radius: 8px;
+        }
+        
+        .detail-label {
+            font-size: 0.9em;
+            color: #7F8C8D;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+        
+        .forecast-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .forecast-day {
+            flex: 1;
+            text-align: center;
+            padding: 15px 10px;
+            background: #F8F9FA;
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        
+        .forecast-day:hover {
+            background: #E3F2FD;
+        }
+        
+        .forecast-date {
+            font-size: 0.9em;
+            color: #7F8C8D;
+            margin-bottom: 10px;
+        }
+        
+        .forecast-icon {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        
+        .forecast-temp {
+            font-weight: bold;
+            color: #2C3E50;
+        }
+        
+        .chart-container {
+            height: 200px;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .temp-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            padding: 20px 10px;
+            background: #F8F9FA;
+            border-radius: 10px;
+        }
+        
+        .chart-bar {
+            width: 30px;
+            background: linear-gradient(to top, #FF9800, #FFC107);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+        
+        .chart-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #7F8C8D;
+        }
+        
+        .radar-container {
+            height: 300px;
+            background: #1A1A1A;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00FF00, transparent);
+            transform-origin: left center;
+            animation: sweep 4s linear infinite;
+        }
+        
+        @keyframes sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .radar-circle {
+            position: absolute;
+            border: 1px solid #00FF00;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        
+        .precipitation-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #00BFFF, transparent);
+            border-radius: 50%;
+            animation: fade 2s ease-in-out infinite;
+        }
+        
+        @keyframes fade {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .ai-insights {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+        
+        .insight-icon {
+            font-size: 1.5em;
+        }
+        
+        .alert-banner {
+            background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+            border-left: 4px solid #FF9800;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-banner.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ WeatherAI Forecast</h1>
+            <p class="subtitle">架空のAI気象データ予測システム - 高精度な天気予報を提供</p>
+        </div>
+        
+        <div class="location-selector">
+            <div class="location-input">
+                <input type="text" id="locationInput" placeholder="都市名を入力（例：東京、大阪、札幌）" value="東京">
+                <button onclick="updateWeather()">予測を更新</button>
+                <button onclick="detectLocation()">📍 現在地を検出</button>
+            </div>
+        </div>
+        
+        <div class="alert-banner" id="alertBanner">
+            ⚠️ <strong>気象警報：</strong>明日の午後、激しい雷雨の可能性があります。外出時はご注意ください。
+        </div>
+        
+        <div class="weather-dashboard">
+            <div class="weather-card current-weather">
+                <h2 class="card-title">🌡️ 現在の天気</h2>
+                <div class="weather-main">
+                    <div class="temperature-display">
+                        <div class="temp-value" id="currentTemp">22°</div>
+                        <div>体感温度: <span id="feelsLike">20°</span></div>
+                    </div>
+                    <div class="weather-icon" id="currentIcon">☀️</div>
+                    <div>
+                        <div style="font-size: 1.5em; color: #2C3E50;" id="weatherDesc">晴れ</div>
+                        <div style="color: #7F8C8D;">更新: <span id="updateTime">12:00</span></div>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <div class="detail-label">湿度</div>
+                        <div class="detail-value" id="humidity">65%</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">風速</div>
+                        <div class="detail-value" id="windSpeed">12 km/h</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">気圧</div>
+                        <div class="detail-value" id="pressure">1013 hPa</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">視程</div>
+                        <div class="detail-value" id="visibility">10 km</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">UV指数</div>
+                        <div class="detail-value" id="uvIndex">5 (中)</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">降水確率</div>
+                        <div class="detail-value" id="precipitation">20%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="weather-card">
+                <h3 class="card-title">📅 7日間予報</h3>
+                <div class="forecast-container" id="forecastContainer">
+                    <!-- 動的に生成される予報 -->
+                </div>
+            </div>
+            
+            <div class="weather-card">
+                <h3 class="card-title">📊 気温推移グラフ</h3>
+                <div class="temp-chart" id="tempChart">
+                    <!-- 動的に生成される気温チャート -->
+                </div>
+            </div>
+            
+            <div class="weather-card">
+                <h3 class="card-title">🔮 AI予測インサイト</h3>
+                <div class="ai-insights">
+                    <div class="insight-item">
+                        <span class="insight-icon">🌡️</span>
+                        <span>明日は最高気温が今日より3度上昇する見込みです</span>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">☔</span>
+                        <span>週末に降水確率が60%を超える可能性があります</span>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">🌸</span>
+                        <span>花粉飛散量：やや多い（対策をお勧めします）</span>
+                    </div>
+                    <div class="insight-item">
+                        <span class="insight-icon">👔</span>
+                        <span>本日の服装指数：長袖シャツがおすすめ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="weather-card">
+                <h3 class="card-title">🛰️ レーダーマップ</h3>
+                <div class="radar-container">
+                    <div class="radar-circle" style="width: 100px; height: 100px; top: calc(50% - 50px); left: calc(50% - 50px);"></div>
+                    <div class="radar-circle" style="width: 200px; height: 200px; top: calc(50% - 100px); left: calc(50% - 100px);"></div>
+                    <div class="radar-circle" style="width: 280px; height: 280px; top: calc(50% - 140px); left: calc(50% - 140px);"></div>
+                    <div class="radar-sweep"></div>
+                    <div class="precipitation-dot" style="top: 30%; left: 40%;"></div>
+                    <div class="precipitation-dot" style="top: 60%; left: 70%; animation-delay: 0.5s;"></div>
+                    <div class="precipitation-dot" style="top: 45%; left: 55%; animation-delay: 1s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const weatherIcons = ['☀️', '⛅', '☁️', '🌧️', '⛈️', '🌨️'];
+        const weatherDescriptions = ['晴れ', '晴れ時々曇り', '曇り', '雨', '雷雨', '雪'];
+        
+        function generateForecast() {
+            const container = document.getElementById('forecastContainer');
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const today = new Date().getDay();
+            let html = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const dayIndex = (today + i) % 7;
+                const temp = Math.floor(Math.random() * 10 + 18);
+                const iconIndex = Math.floor(Math.random() * weatherIcons.length);
+                
+                html += `
+                    <div class="forecast-day">
+                        <div class="forecast-date">${i === 0 ? '今日' : i === 1 ? '明日' : days[dayIndex]}</div>
+                        <div class="forecast-icon">${weatherIcons[iconIndex]}</div>
+                        <div class="forecast-temp">${temp}° / ${temp - 5}°</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function generateTempChart() {
+            const container = document.getElementById('tempChart');
+            let html = '';
+            const hours = ['6時', '9時', '12時', '15時', '18時', '21時'];
+            
+            for (let i = 0; i < hours.length; i++) {
+                const height = Math.random() * 60 + 30;
+                html += `
+                    <div class="chart-bar" style="height: ${height}%;">
+                        <span class="chart-label">${hours[i]}</span>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function updateWeather() {
+            const location = document.getElementById('locationInput').value;
+            
+            // 現在の天気を更新
+            const temp = Math.floor(Math.random() * 15 + 15);
+            const iconIndex = Math.floor(Math.random() * weatherIcons.length);
+            
+            document.getElementById('currentTemp').textContent = `${temp}°`;
+            document.getElementById('feelsLike').textContent = `${temp - 2}°`;
+            document.getElementById('currentIcon').textContent = weatherIcons[iconIndex];
+            document.getElementById('weatherDesc').textContent = weatherDescriptions[iconIndex];
+            document.getElementById('humidity').textContent = `${Math.floor(Math.random() * 40 + 40)}%`;
+            document.getElementById('windSpeed').textContent = `${Math.floor(Math.random() * 20 + 5)} km/h`;
+            document.getElementById('pressure').textContent = `${Math.floor(Math.random() * 20 + 1005)} hPa`;
+            document.getElementById('visibility').textContent = `${Math.floor(Math.random() * 5 + 8)} km`;
+            document.getElementById('uvIndex').textContent = `${Math.floor(Math.random() * 5 + 3)} (中)`;
+            document.getElementById('precipitation').textContent = `${Math.floor(Math.random() * 60 + 10)}%`;
+            
+            const now = new Date();
+            document.getElementById('updateTime').textContent = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            // 予報とチャートを再生成
+            generateForecast();
+            generateTempChart();
+            
+            // ランダムでアラートを表示
+            if (Math.random() > 0.5) {
+                document.getElementById('alertBanner').classList.add('active');
+            } else {
+                document.getElementById('alertBanner').classList.remove('active');
+            }
+        }
+        
+        function detectLocation() {
+            const cities = ['東京', '大阪', '名古屋', '札幌', '福岡', '仙台', '広島', '京都'];
+            const randomCity = cities[Math.floor(Math.random() * cities.length)];
+            document.getElementById('locationInput').value = randomCity;
+            updateWeather();
+        }
+        
+        // 初期表示
+        generateForecast();
+        generateTempChart();
+        updateWeather();
+        
+        // 定期的な更新をシミュレート
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('updateTime').textContent = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }, 60000);
+    </script>
+</body>
+</html>

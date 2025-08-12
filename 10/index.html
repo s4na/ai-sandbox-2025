@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の健康データトラッカー - HealthViz AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #84FAB0 0%, #8FD3F4 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2E7D32;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            color: #2E7D32;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .vital-signs {
+            grid-column: span 2;
+        }
+        
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .vital-item {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .vital-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .vital-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1976D2;
+            margin: 10px 0;
+        }
+        
+        .vital-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .vital-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        
+        .vital-status.warning {
+            background: #FFC107;
+        }
+        
+        .vital-status.alert {
+            background: #F44336;
+        }
+        
+        .heart-rate-chart {
+            height: 200px;
+            background: #F5F5F5;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .heart-line {
+            position: absolute;
+            bottom: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #E91E63;
+            animation: heartbeat 2s linear infinite;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0); }
+        }
+        
+        .pulse-wave {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Cpath d='M0,50 L20,50 L25,20 L30,80 L35,40 L40,60 L45,50 L200,50' stroke='%23E91E63' stroke-width='2' fill='none'/%3E%3C/svg%3E") repeat-x;
+            background-size: 200px 100%;
+            animation: pulse 2s linear infinite;
+        }
+        
+        @keyframes pulse {
+            from { transform: translateX(0); }
+            to { transform: translateX(-200px); }
+        }
+        
+        .activity-rings {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 15px solid #E0E0E0;
+            position: relative;
+        }
+        
+        .ring-progress {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 15px solid transparent;
+            border-top-color: #E91E63;
+            animation: rotate 2s linear infinite;
+        }
+        
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .ring-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .ring-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .sleep-chart {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 10px;
+            background: #F5F5F5;
+            border-radius: 10px;
+        }
+        
+        .sleep-bar {
+            width: 30px;
+            background: linear-gradient(to top, #3F51B5, #9C27B0);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+        }
+        
+        .sleep-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .nutrition-tracker {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .nutrient-item {
+            padding: 15px;
+            background: #F8F9FA;
+            border-radius: 8px;
+        }
+        
+        .nutrient-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .nutrient-bar {
+            height: 10px;
+            background: #E0E0E0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .nutrient-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .calories-fill { background: #FF9800; }
+        .protein-fill { background: #4CAF50; }
+        .carbs-fill { background: #2196F3; }
+        .fat-fill { background: #9C27B0; }
+        
+        .recommendation-list {
+            list-style: none;
+        }
+        
+        .recommendation-item {
+            padding: 12px;
+            background: #F0F9FF;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .recommendation-icon {
+            font-size: 1.5em;
+        }
+        
+        .water-intake {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .water-glass {
+            width: 60px;
+            height: 80px;
+            border: 3px solid #2196F3;
+            border-radius: 0 0 10px 10px;
+            position: relative;
+            background: linear-gradient(to top, #2196F3 0%, transparent 0%);
+            transition: background 0.5s ease;
+        }
+        
+        .water-glass.filled {
+            background: linear-gradient(to top, #2196F3 60%, transparent 60%);
+        }
+        
+        .mood-tracker {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #F8F9FA;
+            border-radius: 10px;
+        }
+        
+        .mood-item {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .mood-item:hover {
+            transform: scale(1.2);
+        }
+        
+        .mood-emoji {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+        
+        .mood-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        .bmi-calculator {
+            padding: 20px;
+            background: #F8F9FA;
+            border-radius: 10px;
+        }
+        
+        .bmi-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .bmi-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .bmi-category {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #84FAB0, #8FD3F4);
+            color: #2E7D32;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💚 HealthViz AI</h1>
+            <p class="subtitle">架空のAI健康データトラッカー - あなたの健康を可視化</p>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card vital-signs">
+                <h3 class="card-title">🏥 バイタルサイン</h3>
+                <div class="vitals-grid">
+                    <div class="vital-item">
+                        <span class="vital-status"></span>
+                        <div class="vital-icon">❤️</div>
+                        <div class="vital-value" id="heartRate">72</div>
+                        <div class="vital-label">心拍数 (BPM)</div>
+                    </div>
+                    <div class="vital-item">
+                        <span class="vital-status"></span>
+                        <div class="vital-icon">🩺</div>
+                        <div class="vital-value" id="bloodPressure">120/80</div>
+                        <div class="vital-label">血圧</div>
+                    </div>
+                    <div class="vital-item">
+                        <span class="vital-status warning"></span>
+                        <div class="vital-icon">🌡️</div>
+                        <div class="vital-value" id="temperature">36.5°C</div>
+                        <div class="vital-label">体温</div>
+                    </div>
+                    <div class="vital-item">
+                        <span class="vital-status"></span>
+                        <div class="vital-icon">💨</div>
+                        <div class="vital-value" id="oxygen">98%</div>
+                        <div class="vital-label">血中酸素</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">💓 心拍数モニター</h3>
+                <div class="heart-rate-chart">
+                    <div class="pulse-wave"></div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; color: #666;">
+                    リアルタイム心拍数: <span style="font-weight: bold; color: #E91E63;">72 BPM</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">🏃 アクティビティリング</h3>
+                <div class="activity-rings">
+                    <div class="ring-container">
+                        <div class="ring">
+                            <div class="ring-progress" style="border-top-color: #E91E63;"></div>
+                        </div>
+                        <div class="ring-center">
+                            <div class="ring-value">75%</div>
+                            <div class="ring-label">運動</div>
+                        </div>
+                    </div>
+                    <div class="ring-container">
+                        <div class="ring">
+                            <div class="ring-progress" style="border-top-color: #4CAF50; animation-duration: 3s;"></div>
+                        </div>
+                        <div class="ring-center">
+                            <div class="ring-value">60%</div>
+                            <div class="ring-label">スタンド</div>
+                        </div>
+                    </div>
+                    <div class="ring-container">
+                        <div class="ring">
+                            <div class="ring-progress" style="border-top-color: #2196F3; animation-duration: 4s;"></div>
+                        </div>
+                        <div class="ring-center">
+                            <div class="ring-value">90%</div>
+                            <div class="ring-label">歩数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">😴 睡眠分析</h3>
+                <div class="sleep-chart">
+                    <div class="sleep-bar" style="height: 60%;">
+                        <span class="sleep-label">日</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 80%;">
+                        <span class="sleep-label">月</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 70%;">
+                        <span class="sleep-label">火</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 90%;">
+                        <span class="sleep-label">水</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 75%;">
+                        <span class="sleep-label">木</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 85%;">
+                        <span class="sleep-label">金</span>
+                    </div>
+                    <div class="sleep-bar" style="height: 95%;">
+                        <span class="sleep-label">土</span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    平均睡眠時間: <strong>7時間30分</strong>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">🥗 栄養トラッカー</h3>
+                <div class="nutrition-tracker">
+                    <div class="nutrient-item">
+                        <div class="nutrient-name">カロリー</div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill calories-fill" style="width: 65%;"></div>
+                        </div>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 5px;">1,625 / 2,500 kcal</div>
+                    </div>
+                    <div class="nutrient-item">
+                        <div class="nutrient-name">タンパク質</div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill protein-fill" style="width: 80%;"></div>
+                        </div>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 5px;">64 / 80 g</div>
+                    </div>
+                    <div class="nutrient-item">
+                        <div class="nutrient-name">炭水化物</div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill carbs-fill" style="width: 55%;"></div>
+                        </div>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 5px;">165 / 300 g</div>
+                    </div>
+                    <div class="nutrient-item">
+                        <div class="nutrient-name">脂質</div>
+                        <div class="nutrient-bar">
+                            <div class="nutrient-fill fat-fill" style="width: 70%;"></div>
+                        </div>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 5px;">49 / 70 g</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">💧 水分摂取</h3>
+                <div class="water-intake">
+                    <div class="water-glass filled"></div>
+                    <div class="water-glass filled"></div>
+                    <div class="water-glass filled"></div>
+                    <div class="water-glass filled"></div>
+                    <div class="water-glass filled"></div>
+                    <div class="water-glass"></div>
+                    <div class="water-glass"></div>
+                    <div class="water-glass"></div>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <strong>1,250 ml / 2,000 ml</strong>
+                    <div style="color: #666; font-size: 0.9em;">あと3杯で目標達成！</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">😊 気分トラッカー</h3>
+                <div class="mood-tracker">
+                    <div class="mood-item">
+                        <div class="mood-emoji">😄</div>
+                        <div class="mood-label">最高</div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-emoji">😊</div>
+                        <div class="mood-label">良い</div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-emoji">😐</div>
+                        <div class="mood-label">普通</div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-emoji">😔</div>
+                        <div class="mood-label">悪い</div>
+                    </div>
+                    <div class="mood-item">
+                        <div class="mood-emoji">😢</div>
+                        <div class="mood-label">最悪</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; color: #666;">
+                    今日の気分を記録してください
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">📊 BMI計算機</h3>
+                <div class="bmi-calculator">
+                    <div class="bmi-display">
+                        <div class="bmi-value">22.5</div>
+                        <div class="bmi-category">標準体重</div>
+                    </div>
+                    <div style="text-align: center; color: #666;">
+                        身長: 170cm | 体重: 65kg
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">💡 AI健康アドバイス</h3>
+                <ul class="recommendation-list">
+                    <li class="recommendation-item">
+                        <span class="recommendation-icon">🏃</span>
+                        <span>あと2,000歩で今日の目標達成です！</span>
+                    </li>
+                    <li class="recommendation-item">
+                        <span class="recommendation-icon">💧</span>
+                        <span>水分摂取量を増やしましょう</span>
+                    </li>
+                    <li class="recommendation-item">
+                        <span class="recommendation-icon">😴</span>
+                        <span>睡眠の質が向上しています</span>
+                    </li>
+                    <li class="recommendation-item">
+                        <span class="recommendation-icon">🥗</span>
+                        <span>野菜の摂取を増やすことをお勧めします</span>
+                    </li>
+                </ul>
+                <button onclick="generateAdvice()">新しいアドバイスを取得</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function updateVitals() {
+            document.getElementById('heartRate').textContent = Math.floor(Math.random() * 20 + 65);
+            document.getElementById('temperature').textContent = (36 + Math.random()).toFixed(1) + '°C';
+            document.getElementById('oxygen').textContent = Math.floor(Math.random() * 5 + 95) + '%';
+            
+            const systolic = Math.floor(Math.random() * 20 + 110);
+            const diastolic = Math.floor(Math.random() * 15 + 70);
+            document.getElementById('bloodPressure').textContent = `${systolic}/${diastolic}`;
+        }
+        
+        function generateAdvice() {
+            const advices = [
+                { icon: '🏃', text: 'あと2,000歩で今日の目標達成です！' },
+                { icon: '💧', text: '水分摂取量を増やしましょう' },
+                { icon: '😴', text: '睡眠の質が向上しています' },
+                { icon: '🥗', text: '野菜の摂取を増やすことをお勧めします' },
+                { icon: '🧘', text: '5分間の瞑想で ストレスを軽減しましょう' },
+                { icon: '🚶', text: '1時間ごとに立ち上がって歩きましょう' },
+                { icon: '🍎', text: 'フルーツを1日2個摂取しましょう' },
+                { icon: '💪', text: '筋力トレーニングを週2回行いましょう' }
+            ];
+            
+            const selectedAdvices = advices.sort(() => 0.5 - Math.random()).slice(0, 4);
+            const list = document.querySelector('.recommendation-list');
+            
+            list.innerHTML = selectedAdvices.map(advice => `
+                <li class="recommendation-item">
+                    <span class="recommendation-icon">${advice.icon}</span>
+                    <span>${advice.text}</span>
+                </li>
+            `).join('');
+        }
+        
+        // 定期的な更新
+        setInterval(updateVitals, 5000);
+        
+        // 水分摂取のインタラクション
+        document.querySelectorAll('.water-glass').forEach((glass, index) => {
+            glass.addEventListener('click', function() {
+                this.classList.toggle('filled');
+            });
+        });
+        
+        // 気分トラッカーのインタラクション
+        document.querySelectorAll('.mood-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.mood-item').forEach(m => m.style.opacity = '0.5');
+                this.style.opacity = '1';
+            });
+        });
+    </script>
+</body>
+</html>

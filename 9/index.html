@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空のソーシャルネットワーク分析ツール - NetGraph AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            color: #1e3c72;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .network-graph {
+            grid-column: span 2;
+            min-height: 400px;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .node:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+        
+        .node.central {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+        }
+        
+        .node.primary {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+        }
+        
+        .node.secondary {
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+        }
+        
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: rgba(0, 0, 0, 0.1);
+            transform-origin: left center;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .metric-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .metric-label {
+            color: #666;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        
+        .influence-chart {
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .influence-bar {
+            width: 40px;
+            background: linear-gradient(to top, #4ECDC4, #44A08D);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: height 0.5s ease;
+        }
+        
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        
+        .user-item:hover {
+            background: #e9ecef;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .user-stats {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .sentiment-analysis {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .sentiment-item {
+            text-align: center;
+        }
+        
+        .sentiment-emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .sentiment-percentage {
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .activity-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ECDC4;
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 30px;
+            width: 1px;
+            height: calc(100% + 15px);
+            background: #ddd;
+        }
+        
+        .timeline-item:last-child::after {
+            display: none;
+        }
+        
+        .timeline-time {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .timeline-content {
+            margin-top: 5px;
+            color: #333;
+        }
+        
+        .community-detection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .community-tag {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: white;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .community-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E53); }
+        .community-2 { background: linear-gradient(135deg, #4ECDC4, #44A08D); }
+        .community-3 { background: linear-gradient(135deg, #667EEA, #764BA2); }
+        .community-4 { background: linear-gradient(135deg, #FEC163, #DE4313); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 NetGraph AI</h1>
+            <p class="subtitle">架空のソーシャルネットワーク分析ツール - 関係性を可視化し、インサイトを発見</p>
+        </div>
+        
+        <div class="control-panel">
+            <button onclick="generateNewNetwork()">🔄 新しいネットワークを生成</button>
+            <button onclick="analyzeInfluence()">📊 影響力分析</button>
+            <button onclick="detectCommunities()">👥 コミュニティ検出</button>
+            <select id="networkType">
+                <option value="social">ソーシャルネットワーク</option>
+                <option value="business">ビジネスネットワーク</option>
+                <option value="academic">学術ネットワーク</option>
+            </select>
+            <button onclick="exportData()">📥 データエクスポート</button>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="card network-graph">
+                <h3 class="card-title">🕸️ ネットワークグラフ</h3>
+                <div id="networkContainer" style="position: relative; height: 400px;">
+                    <!-- ネットワークノードが動的に生成される -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">📈 ネットワーク統計</h3>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-value" id="nodeCount">48</div>
+                        <div class="metric-label">ノード数</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="edgeCount">156</div>
+                        <div class="metric-label">エッジ数</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="density">0.68</div>
+                        <div class="metric-label">密度</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value" id="clustering">0.45</div>
+                        <div class="metric-label">クラスタリング係数</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">🎯 影響力ランキング</h3>
+                <div class="influence-chart" id="influenceChart">
+                    <!-- 影響力チャートが動的に生成される -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">👤 キーインフルエンサー</h3>
+                <div class="user-list" id="userList">
+                    <!-- ユーザーリストが動的に生成される -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">😊 感情分析</h3>
+                <div class="sentiment-analysis">
+                    <div class="sentiment-item">
+                        <div class="sentiment-emoji">😊</div>
+                        <div class="sentiment-percentage">45%</div>
+                        <div>ポジティブ</div>
+                    </div>
+                    <div class="sentiment-item">
+                        <div class="sentiment-emoji">😐</div>
+                        <div class="sentiment-percentage">30%</div>
+                        <div>中立</div>
+                    </div>
+                    <div class="sentiment-item">
+                        <div class="sentiment-emoji">😔</div>
+                        <div class="sentiment-percentage">25%</div>
+                        <div>ネガティブ</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">🏷️ コミュニティ検出</h3>
+                <div class="community-detection" id="communities">
+                    <span class="community-tag community-1">テクノロジー愛好家</span>
+                    <span class="community-tag community-2">ビジネスプロフェッショナル</span>
+                    <span class="community-tag community-3">クリエイティブ集団</span>
+                    <span class="community-tag community-4">研究者ネットワーク</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">⏱️ アクティビティタイムライン</h3>
+                <div class="activity-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">2時間前</div>
+                        <div class="timeline-content">新しい接続が5件確立されました</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">5時間前</div>
+                        <div class="timeline-content">コミュニティ「テクノロジー愛好家」が急成長中</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">12時間前</div>
+                        <div class="timeline-content">インフルエンサーノードが特定されました</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">1日前</div>
+                        <div class="timeline-content">ネットワーク密度が15%増加</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function generateNetworkNodes() {
+            const container = document.getElementById('networkContainer');
+            container.innerHTML = '';
+            
+            // 中心ノード
+            const centralNode = document.createElement('div');
+            centralNode.className = 'node central';
+            centralNode.textContent = 'A';
+            centralNode.style.left = '50%';
+            centralNode.style.top = '50%';
+            centralNode.style.transform = 'translate(-50%, -50%)';
+            container.appendChild(centralNode);
+            
+            // 周辺ノード
+            const nodeCount = 12;
+            const radius = 150;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i / nodeCount) * 2 * Math.PI;
+                const x = 50 + radius * Math.cos(angle) / 4;
+                const y = 50 + radius * Math.sin(angle) / 4;
+                
+                const node = document.createElement('div');
+                node.className = i % 2 === 0 ? 'node primary' : 'node secondary';
+                node.textContent = String.fromCharCode(66 + i);
+                node.style.left = `${x}%`;
+                node.style.top = `${y}%`;
+                node.style.transform = 'translate(-50%, -50%)';
+                container.appendChild(node);
+                
+                // 接続線
+                const connection = document.createElement('div');
+                connection.className = 'connection';
+                const dx = x - 50;
+                const dy = y - 50;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle2 = Math.atan2(dy, dx);
+                
+                connection.style.width = `${length * 4}px`;
+                connection.style.left = '50%';
+                connection.style.top = '50%';
+                connection.style.transform = `rotate(${angle2}rad)`;
+                container.appendChild(connection);
+            }
+        }
+        
+        function generateInfluenceChart() {
+            const container = document.getElementById('influenceChart');
+            const users = ['User A', 'User B', 'User C', 'User D', 'User E'];
+            let html = '';
+            
+            users.forEach(user => {
+                const height = Math.random() * 60 + 30;
+                html += `
+                    <div class="influence-bar" style="height: ${height}%;">
+                        <span class="bar-label">${user}</span>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function generateUserList() {
+            const container = document.getElementById('userList');
+            const users = [
+                { name: '山田太郎', followers: 1250, posts: 340 },
+                { name: '佐藤花子', followers: 980, posts: 210 },
+                { name: '鈴木一郎', followers: 750, posts: 180 },
+                { name: '田中美咲', followers: 620, posts: 290 },
+                { name: '高橋健太', followers: 540, posts: 150 }
+            ];
+            
+            let html = '';
+            users.forEach((user, index) => {
+                html += `
+                    <div class="user-item">
+                        <div class="user-avatar">${user.name.charAt(0)}</div>
+                        <div class="user-info">
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-stats">フォロワー: ${user.followers} | 投稿: ${user.posts}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function generateNewNetwork() {
+            generateNetworkNodes();
+            generateInfluenceChart();
+            generateUserList();
+            
+            // 統計値を更新
+            document.getElementById('nodeCount').textContent = Math.floor(Math.random() * 50 + 30);
+            document.getElementById('edgeCount').textContent = Math.floor(Math.random() * 200 + 100);
+            document.getElementById('density').textContent = (Math.random() * 0.5 + 0.3).toFixed(2);
+            document.getElementById('clustering').textContent = (Math.random() * 0.4 + 0.3).toFixed(2);
+        }
+        
+        function analyzeInfluence() {
+            alert('架空の影響力分析を実行中...\n結果: 5つのキーインフルエンサーが特定されました！');
+            generateInfluenceChart();
+        }
+        
+        function detectCommunities() {
+            const communities = [
+                ['テクノロジー愛好家', 'ビジネスプロフェッショナル', 'クリエイティブ集団', '研究者ネットワーク'],
+                ['スタートアップ', 'マーケティング', 'デザイナー', 'エンジニア'],
+                ['イノベーター', 'アーリーアダプター', 'メインストリーム', 'ラガード']
+            ];
+            
+            const selected = communities[Math.floor(Math.random() * communities.length)];
+            const container = document.getElementById('communities');
+            
+            container.innerHTML = selected.map((name, index) => 
+                `<span class="community-tag community-${(index % 4) + 1}">${name}</span>`
+            ).join('');
+        }
+        
+        function exportData() {
+            alert('架空のネットワークデータをエクスポート中...\nフォーマット: JSON, CSV, GraphML');
+        }
+        
+        // 初期化
+        generateNetworkNodes();
+        generateInfluenceChart();
+        generateUserList();
+    </script>
+</body>
+</html>
