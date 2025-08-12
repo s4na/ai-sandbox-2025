@@ -95,11 +95,18 @@
             font-size: 16px;
             cursor: pointer;
             margin-top: 15px;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
         }
         
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
         
         .dashboard {
@@ -276,7 +283,7 @@
         <div class="input-section">
             <h3>分析したいテキストを入力してください</h3>
             <textarea id="textInput" placeholder="例：今日は素晴らしい一日でした！新しいプロジェクトが始まり、チーム全員がやる気に満ちています。"></textarea>
-            <button onclick="analyzeEmotion()">感情分析を開始</button>
+            <button id="analyzeButton" onclick="analyzeEmotion()" disabled>モデル読み込み中...</button>
         </div>
         
         <div class="loading" id="loading">
@@ -397,9 +404,13 @@
         // モデルの初期化
         async function initializeModel() {
             const statusElement = document.getElementById('modelStatus');
+            const analyzeButton = document.getElementById('analyzeButton');
+            
             try {
                 statusElement.textContent = '🤖 感情分析モデルを読み込み中... (初回は数分かかる場合があります)';
                 statusElement.className = 'model-status loading';
+                analyzeButton.textContent = 'モデル読み込み中...';
+                analyzeButton.disabled = true;
                 
                 // 感情分析パイプラインを作成
                 sentimentAnalyzer = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
@@ -407,10 +418,15 @@
                 isModelReady = true;
                 statusElement.textContent = '✅ AIモデル準備完了！テキストを入力して分析を開始できます';
                 statusElement.className = 'model-status ready';
+                analyzeButton.textContent = '感情分析を開始';
+                analyzeButton.disabled = false;
+                analyzeButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             } catch (error) {
                 console.error('モデルの読み込みエラー:', error);
                 statusElement.textContent = '❌ モデルの読み込みに失敗しました。ページを再読み込みしてください。';
                 statusElement.className = 'model-status error';
+                analyzeButton.textContent = 'エラー: 再読み込みしてください';
+                analyzeButton.disabled = true;
             }
         }
         
