@@ -16,9 +16,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Heroicons -->
-    <link rel="stylesheet" href="https://unpkg.com/heroicons@2.0.18/24/outline/style.css">
-    
     <style>
         * { font-family: 'Inter', sans-serif; }
         .sidebar-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -36,8 +33,20 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
         .animate-slide-in { animation: slideIn 0.3s ease-out; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         
         .chart-container { position: relative; height: 300px; }
         
@@ -66,6 +75,72 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        
+        .tab-active {
+            border-bottom: 2px solid #6366f1;
+            color: #6366f1;
+        }
+        
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            z-index: 1000;
+            background: #1f2937;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 4px;
+        }
+        
+        .tooltip-trigger:hover .tooltip {
+            visibility: visible;
+        }
+        
+        .page-section {
+            display: none;
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dark .dropdown-menu {
+            background: #1f2937;
+            border-color: #374151;
+        }
     </style>
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -82,21 +157,21 @@
             
             <!-- Navigation -->
             <nav class="flex-1 overflow-y-auto sidebar-scrollbar p-4 space-y-1">
-                <a href="#dashboard" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white">
+                <a href="#dashboard" data-page="dashboard" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-indigo-600 text-white cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                     </svg>
                     <span class="font-medium">ダッシュボード</span>
                 </a>
                 
-                <a href="#models" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                <a href="#models" data-page="models" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                     </svg>
                     <span class="font-medium">AIモデル管理</span>
                 </a>
                 
-                <a href="#playground" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                <a href="#playground" data-page="playground" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -104,38 +179,46 @@
                     <span class="font-medium">プレイグラウンド</span>
                 </a>
                 
-                <a href="#api-keys" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                <a href="#api-keys" data-page="api-keys" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
                     <span class="font-medium">APIキー</span>
                 </a>
                 
-                <a href="#usage" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                <a href="#usage" data-page="usage" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
                     <span class="font-medium">使用状況</span>
                 </a>
                 
-                <a href="#billing" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                <a href="#billing" data-page="billing" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                     </svg>
                     <span class="font-medium">請求・支払い</span>
                 </a>
                 
+                <a href="#settings" data-page="settings" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium">設定</span>
+                </a>
+                
                 <div class="pt-4 mt-4 border-t border-gray-800">
                     <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">リソース</p>
                     
-                    <a href="#docs" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                    <a href="#docs" data-page="docs" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
                         <span class="font-medium">ドキュメント</span>
                     </a>
                     
-                    <a href="#support" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+                    <a href="#support" data-page="support" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
                         </svg>
@@ -146,7 +229,7 @@
             
             <!-- User Profile -->
             <div class="p-4 border-t border-gray-800">
-                <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                <div class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-800 cursor-pointer relative" onclick="toggleUserMenu()">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
                         <span class="text-sm font-semibold">架</span>
                     </div>
@@ -157,6 +240,17 @@
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
+                    
+                    <!-- User Menu Dropdown -->
+                    <div id="userMenu" class="dropdown-menu bottom-full mb-2" style="left: 0; right: 0;">
+                        <div class="py-1">
+                            <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">プロファイル</a>
+                            <a href="#account" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">アカウント設定</a>
+                            <a href="#team" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">チーム管理</a>
+                            <hr class="my-1 border-gray-200 dark:border-gray-700">
+                            <a href="#logout" onclick="logout()" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">ログアウト</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -177,40 +271,46 @@
                         <!-- Search Bar -->
                         <div class="flex-1 max-w-2xl mx-4">
                             <div class="relative">
-                                <input type="text" placeholder="検索... (架空のAIモデル、ドキュメント、設定)" 
+                                <input type="text" id="globalSearch" placeholder="検索... (架空のAIモデル、ドキュメント、設定)" 
                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                 <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
+                                <!-- Search Results Dropdown -->
+                                <div id="searchResults" class="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hidden max-h-96 overflow-y-auto">
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Header Actions -->
                         <div class="flex items-center space-x-4">
                             <!-- Notifications -->
-                            <button class="relative p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <button class="relative p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 tooltip-trigger" onclick="showNotificationPanel()">
                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                                 </svg>
-                                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                <span id="notificationBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                <span class="tooltip">通知</span>
                             </button>
                             
                             <!-- Dark Mode Toggle -->
-                            <button id="dark-mode-toggle" class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <button id="dark-mode-toggle" class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 tooltip-trigger">
                                 <svg class="h-6 w-6 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                 </svg>
                                 <svg class="h-6 w-6 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                                 </svg>
+                                <span class="tooltip">テーマ切替</span>
                             </button>
                             
                             <!-- Settings -->
-                            <button class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                            <button class="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 tooltip-trigger" onclick="navigateToPage('settings')">
                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
+                                <span class="tooltip">設定</span>
                             </button>
                         </div>
                     </div>
@@ -219,7 +319,8 @@
             
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-                <div class="p-4 sm:p-6 lg:p-8">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-section active p-4 sm:p-6 lg:p-8">
                     <!-- Page Title -->
                     <div class="mb-8 animate-fade-in">
                         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">架空のAIダッシュボード</h1>
@@ -229,58 +330,58 @@
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <!-- Card 1 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in" style="animation-delay: 0.1s">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in cursor-pointer" style="animation-delay: 0.1s" onclick="showDetailModal('APIリクエスト詳細')">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
                                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+12.5%</span>
+                                <span id="apiGrowth" class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+12.5%</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">1,234,567</h3>
+                            <h3 id="apiRequests" class="text-2xl font-bold text-gray-900 dark:text-gray-100">1,234,567</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">APIリクエスト/月</p>
                         </div>
                         
                         <!-- Card 2 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in" style="animation-delay: 0.2s">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in cursor-pointer" style="animation-delay: 0.2s" onclick="showDetailModal('料金詳細')">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
                                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+8.2%</span>
+                                <span id="costGrowth" class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+8.2%</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">¥456,789</h3>
+                            <h3 id="monthlyCost" class="text-2xl font-bold text-gray-900 dark:text-gray-100">¥456,789</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">今月の使用料金</p>
                         </div>
                         
                         <!-- Card 3 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in" style="animation-delay: 0.3s">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in cursor-pointer" style="animation-delay: 0.3s" onclick="showDetailModal('パフォーマンス詳細')">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
                                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-400 px-2 py-1 rounded">99.95%</span>
+                                <span id="uptime" class="text-sm font-medium text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-400 px-2 py-1 rounded">99.95%</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">23ms</h3>
+                            <h3 id="responseTime" class="text-2xl font-bold text-gray-900 dark:text-gray-100">23ms</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">平均レスポンス時間</p>
                         </div>
                         
                         <!-- Card 4 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in" style="animation-delay: 0.4s">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover-scale p-6 animate-fade-in cursor-pointer" style="animation-delay: 0.4s" onclick="showDetailModal('ユーザー詳細')">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
                                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+24</span>
+                                <span id="userGrowth" class="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400 px-2 py-1 rounded">+24</span>
                             </div>
-                            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">8,456</h3>
+                            <h3 id="activeUsers" class="text-2xl font-bold text-gray-900 dark:text-gray-100">8,456</h3>
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">アクティブユーザー</p>
                         </div>
                     </div>
@@ -291,10 +392,10 @@
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 animate-fade-in" style="animation-delay: 0.5s">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">APIリクエスト推移</h2>
-                                <select class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                                    <option>過去7日間</option>
-                                    <option>過去30日間</option>
-                                    <option>過去90日間</option>
+                                <select id="chartPeriod" class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                    <option value="7">過去7日間</option>
+                                    <option value="30">過去30日間</option>
+                                    <option value="90">過去90日間</option>
                                 </select>
                             </div>
                             <div class="chart-container">
@@ -306,7 +407,7 @@
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 animate-fade-in" style="animation-delay: 0.6s">
                             <div class="flex items-center justify-between mb-4">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">モデル別使用量</h2>
-                                <button class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">詳細を見る</button>
+                                <button onclick="refreshChart('bar')" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">更新</button>
                             </div>
                             <div class="chart-container">
                                 <canvas id="barChart"></canvas>
@@ -319,188 +420,970 @@
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">最近のAPIアクティビティ</h2>
-                                <button class="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                                    エクスポート
-                                </button>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="tableSearch" placeholder="検索..." class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                                    <button onclick="exportTableData()" class="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        エクスポート
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">タイムスタンプ</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">エンドポイント</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">モデル</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">トークン数</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ステータス</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">レスポンス時間</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onclick="sortTable('timestamp')">
+                                            タイムスタンプ ↕
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onclick="sortTable('endpoint')">
+                                            エンドポイント ↕
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onclick="sortTable('model')">
+                                            モデル ↕
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onclick="sortTable('tokens')">
+                                            トークン数 ↕
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            ステータス
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onclick="sortTable('response')">
+                                            レスポンス時間 ↕
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            アクション
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">2024-01-14 15:32:45</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">/v1/chat/completions</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">GPT-4-Fictional</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">1,234</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400">
-                                                成功
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">245ms</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">2024-01-14 15:31:22</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">/v1/embeddings</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">Ada-002-Fictional</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">512</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400">
-                                                成功
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">89ms</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">2024-01-14 15:30:15</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">/v1/images/generations</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">DALL-E-3-Fictional</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">-</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400">
-                                                処理中
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">3,421ms</td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">2024-01-14 15:28:33</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">/v1/chat/completions</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">GPT-3.5-Turbo-Fictional</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">789</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-400">
-                                                エラー
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">-</td>
-                                    </tr>
+                                <tbody id="apiTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 </tbody>
                             </table>
                         </div>
                         <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between">
                                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                                    全 <span class="font-medium">1,234</span> 件中 <span class="font-medium">1</span> - <span class="font-medium">4</span> 件を表示
+                                    全 <span id="totalRecords">0</span> 件中 <span id="showingRecords">0</span> 件を表示
                                 </p>
-                                <div class="flex space-x-2">
-                                    <button class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">前へ</button>
-                                    <button class="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">1</button>
-                                    <button class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">2</button>
-                                    <button class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">3</button>
-                                    <button class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">次へ</button>
+                                <div class="flex space-x-2" id="pagination">
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Models Page -->
+                <div id="models-page" class="page-section p-4 sm:p-6 lg:p-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">AIモデル管理</h1>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">架空のAIモデルの設定と管理</p>
+                    </div>
                     
-                    <!-- Notification Alert -->
-                    <div id="notification" class="hidden fixed bottom-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-sm animate-slide-in">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 hover-scale cursor-pointer" onclick="showModelConfig('GPT-4')">
+                            <h3 class="text-lg font-semibold mb-2">GPT-4-Fictional</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">最新の大規模言語モデル</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                                <button class="text-sm text-indigo-600">設定</button>
                             </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">架空の通知</p>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">AIモデルが正常に更新されました</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 hover-scale cursor-pointer" onclick="showModelConfig('GPT-3.5')">
+                            <h3 class="text-lg font-semibold mb-2">GPT-3.5-Turbo-Fictional</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">高速レスポンスモデル</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                                <button class="text-sm text-indigo-600">設定</button>
                             </div>
-                            <div class="ml-4 flex-shrink-0 flex">
-                                <button onclick="closeNotification()" class="inline-flex text-gray-400 hover:text-gray-500">
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 hover-scale cursor-pointer" onclick="showModelConfig('DALL-E')">
+                            <h3 class="text-lg font-semibold mb-2">DALL-E-3-Fictional</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">画像生成AI</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Limited</span>
+                                <button class="text-sm text-indigo-600">設定</button>
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Playground Page -->
+                <div id="playground-page" class="page-section p-4 sm:p-6 lg:p-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">プレイグラウンド</h1>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">架空のAIモデルをテスト</p>
+                    </div>
                     
-                    <!-- Modal -->
-                    <div id="modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-                        <div class="flex items-center justify-center min-h-screen px-4">
-                            <div class="fixed inset-0 bg-black opacity-50" onclick="closeModal()"></div>
-                            <div class="relative bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 animate-fade-in">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">架空のAPIキーを作成</h3>
-                                <form>
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">キー名</label>
-                                        <input type="text" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Production API Key">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">権限</label>
-                                        <select class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                            <option>フルアクセス</option>
-                                            <option>読み取り専用</option>
-                                            <option>書き込み専用</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-6">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">有効期限</label>
-                                        <input type="date" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-                                    <div class="flex justify-end space-x-3">
-                                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                            キャンセル
-                                        </button>
-                                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                                            作成
-                                        </button>
-                                    </div>
-                                </form>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">入力</h3>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">モデル選択</label>
+                                <select id="playgroundModel" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                    <option>GPT-4-Fictional</option>
+                                    <option>GPT-3.5-Turbo-Fictional</option>
+                                    <option>Claude-3-Fictional</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">プロンプト</label>
+                                <textarea id="playgroundPrompt" rows="10" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" placeholder="架空のAIに質問を入力..."></textarea>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="runPlayground()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                    実行
+                                </button>
+                                <button onclick="clearPlayground()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    クリア
+                                </button>
                             </div>
                         </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+                            <h3 class="text-lg font-semibold mb-4">出力</h3>
+                            <div id="playgroundOutput" class="min-h-[400px] p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                <p class="text-gray-500 dark:text-gray-400">結果がここに表示されます...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API Keys Page -->
+                <div id="api-keys-page" class="page-section p-4 sm:p-6 lg:p-8">
+                    <div class="mb-8 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">APIキー管理</h1>
+                            <p class="mt-2 text-gray-600 dark:text-gray-400">架空のAPIキーの管理</p>
+                        </div>
+                        <button onclick="openModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            新規作成
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">名前</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">キー</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">作成日</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">最終使用</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">アクション</th>
+                                </tr>
+                            </thead>
+                            <tbody id="apiKeysTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Settings Page -->
+                <div id="settings-page" class="page-section p-4 sm:p-6 lg:p-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">設定</h1>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">アカウントとシステムの設定</p>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">一般設定</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">言語</label>
+                                    <select class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                        <option>日本語</option>
+                                        <option>English</option>
+                                        <option>中文</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">タイムゾーン</label>
+                                    <select class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                        <option>Asia/Tokyo (JST)</option>
+                                        <option>America/New_York (EST)</option>
+                                        <option>Europe/London (GMT)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">通知設定</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span class="text-sm">メール通知を受け取る</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span class="text-sm">使用量アラート</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2">
+                                    <span class="text-sm">マーケティングメール</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button onclick="saveSettings()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            設定を保存
+                        </button>
                     </div>
                 </div>
             </main>
         </div>
     </div>
     
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="hidden fixed right-4 top-20 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl z-50 animate-slide-in">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+                <h3 class="font-semibold">通知</h3>
+                <button onclick="closeNotificationPanel()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="max-h-96 overflow-y-auto">
+            <div id="notificationList" class="p-4 space-y-3">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Alert -->
+    <div id="notification" class="hidden fixed bottom-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-sm animate-slide-in z-50">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg id="notificationIcon" class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div class="ml-3 w-0 flex-1">
+                <p id="notificationTitle" class="text-sm font-medium text-gray-900 dark:text-gray-100">架空の通知</p>
+                <p id="notificationMessage" class="mt-1 text-sm text-gray-500 dark:text-gray-400">操作が正常に完了しました</p>
+            </div>
+            <div class="ml-4 flex-shrink-0 flex">
+                <button onclick="closeNotification()" class="inline-flex text-gray-400 hover:text-gray-500">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black opacity-50" onclick="closeModal()"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 animate-fade-in">
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">架空のAPIキーを作成</h3>
+                <form id="modalForm" onsubmit="handleModalSubmit(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">キー名</label>
+                        <input type="text" id="keyName" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Production API Key">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">権限</label>
+                        <select id="keyPermission" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option>フルアクセス</option>
+                            <option>読み取り専用</option>
+                            <option>書き込み専用</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">有効期限</label>
+                        <input type="date" id="keyExpiry" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            キャンセル
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            作成
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // Dark mode toggle
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const html = document.documentElement;
+        // Global State
+        let apiData = [];
+        let apiKeys = [];
+        let notifications = [];
+        let currentPage = 1;
+        let recordsPerPage = 10;
+        let sortColumn = 'timestamp';
+        let sortDirection = 'desc';
+        let lineChartInstance = null;
+        let barChartInstance = null;
         
-        // Check for saved dark mode preference
-        if (localStorage.getItem('darkMode') === 'true') {
-            html.classList.add('dark');
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeData();
+            initializeCharts();
+            initializeEventListeners();
+            startRealtimeUpdates();
+            loadSavedSettings();
+        });
+        
+        // Initialize Data
+        function initializeData() {
+            // Generate fake API data
+            for (let i = 0; i < 100; i++) {
+                const statuses = ['成功', '処理中', 'エラー'];
+                const models = ['GPT-4-Fictional', 'GPT-3.5-Turbo-Fictional', 'DALL-E-3-Fictional', 'Ada-002-Fictional', 'Whisper-Fictional'];
+                const endpoints = ['/v1/chat/completions', '/v1/embeddings', '/v1/images/generations', '/v1/audio/transcriptions'];
+                
+                apiData.push({
+                    id: i + 1,
+                    timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
+                    model: models[Math.floor(Math.random() * models.length)],
+                    tokens: Math.floor(Math.random() * 5000),
+                    status: statuses[Math.floor(Math.random() * statuses.length)],
+                    responseTime: Math.floor(Math.random() * 1000) + 'ms'
+                });
+            }
+            
+            // Generate fake API keys
+            for (let i = 0; i < 5; i++) {
+                apiKeys.push({
+                    id: i + 1,
+                    name: `架空のキー ${i + 1}`,
+                    key: `sk-fictional-${Math.random().toString(36).substr(2, 48)}`,
+                    created: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP'),
+                    lastUsed: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP')
+                });
+            }
+            
+            // Generate notifications
+            const notificationMessages = [
+                'APIリクエストが正常に処理されました',
+                '新しいモデルが利用可能になりました',
+                '使用量が制限の80%に達しました',
+                'システムメンテナンスのお知らせ',
+                '架空の請求書が発行されました'
+            ];
+            
+            for (let i = 0; i < 5; i++) {
+                notifications.push({
+                    id: i + 1,
+                    title: '架空の通知',
+                    message: notificationMessages[i],
+                    time: `${Math.floor(Math.random() * 24)}時間前`,
+                    read: Math.random() > 0.5
+                });
+            }
+            
+            updateTable();
+            updateApiKeysTable();
+            updateNotificationList();
         }
         
-        darkModeToggle.addEventListener('click', () => {
+        // Initialize Event Listeners
+        function initializeEventListeners() {
+            // Dark mode toggle
+            document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+            
+            // Mobile menu
+            document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
+            
+            // Sidebar navigation
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', handleNavigation);
+            });
+            
+            // Search
+            document.getElementById('globalSearch').addEventListener('input', handleGlobalSearch);
+            
+            // Table search
+            document.getElementById('tableSearch').addEventListener('input', filterTable);
+            
+            // Chart period change
+            document.getElementById('chartPeriod').addEventListener('change', updateLineChart);
+            
+            // Click outside handlers
+            document.addEventListener('click', (e) => {
+                // Close dropdowns
+                if (!e.target.closest('#userMenu') && !e.target.closest('[onclick="toggleUserMenu()"]')) {
+                    document.getElementById('userMenu').classList.remove('show');
+                }
+                if (!e.target.closest('#notificationPanel') && !e.target.closest('[onclick="showNotificationPanel()"]')) {
+                    document.getElementById('notificationPanel').classList.add('hidden');
+                }
+                if (!e.target.closest('#searchResults') && !e.target.closest('#globalSearch')) {
+                    document.getElementById('searchResults').classList.add('hidden');
+                }
+            });
+        }
+        
+        // Navigation
+        function handleNavigation(e) {
+            e.preventDefault();
+            const page = e.currentTarget.dataset.page;
+            navigateToPage(page);
+        }
+        
+        function navigateToPage(page) {
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('bg-indigo-600', 'text-white');
+                link.classList.add('text-gray-300', 'hover:bg-gray-800', 'hover:text-white');
+            });
+            
+            const activeLink = document.querySelector(`[data-page="${page}"]`);
+            if (activeLink) {
+                activeLink.classList.remove('text-gray-300', 'hover:bg-gray-800', 'hover:text-white');
+                activeLink.classList.add('bg-indigo-600', 'text-white');
+            }
+            
+            // Show/hide pages
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            const pageElement = document.getElementById(`${page}-page`);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+            
+            // Special handling for certain pages
+            if (page === 'dashboard') {
+                setTimeout(() => {
+                    if (lineChartInstance) lineChartInstance.update();
+                    if (barChartInstance) barChartInstance.update();
+                }, 100);
+            }
+        }
+        
+        // Dark Mode
+        function toggleDarkMode() {
+            const html = document.documentElement;
             html.classList.toggle('dark');
             localStorage.setItem('darkMode', html.classList.contains('dark'));
-        });
+            
+            // Update charts theme
+            if (lineChartInstance && barChartInstance) {
+                const isDark = html.classList.contains('dark');
+                const textColor = isDark ? '#e5e7eb' : '#374151';
+                
+                lineChartInstance.options.scales.x.ticks.color = textColor;
+                lineChartInstance.options.scales.y.ticks.color = textColor;
+                barChartInstance.options.scales.x.ticks.color = textColor;
+                barChartInstance.options.scales.y.ticks.color = textColor;
+                
+                lineChartInstance.update();
+                barChartInstance.update();
+            }
+        }
         
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const sidebar = document.getElementById('sidebar');
+        // Load saved settings
+        function loadSavedSettings() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark');
+            }
+        }
         
-        mobileMenuBtn.addEventListener('click', () => {
+        // Mobile Menu
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('-translate-x-full');
-        });
+        }
         
-        // Modal functions
+        // User Menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('show');
+        }
+        
+        // Search
+        function handleGlobalSearch(e) {
+            const query = e.target.value.toLowerCase();
+            const results = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                results.classList.add('hidden');
+                return;
+            }
+            
+            // Simulate search results
+            const searchData = [
+                { title: 'GPT-4 設定', page: 'models', icon: '⚙️' },
+                { title: 'APIキー管理', page: 'api-keys', icon: '🔑' },
+                { title: '使用量レポート', page: 'usage', icon: '📊' },
+                { title: 'プレイグラウンド', page: 'playground', icon: '🎮' },
+                { title: '請求情報', page: 'billing', icon: '💳' }
+            ];
+            
+            const filtered = searchData.filter(item => 
+                item.title.toLowerCase().includes(query)
+            );
+            
+            if (filtered.length > 0) {
+                results.innerHTML = filtered.map(item => `
+                    <div class="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" onclick="navigateToPage('${item.page}')">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${item.icon}</span>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${item.title}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">架空のコンテンツ</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                results.classList.remove('hidden');
+            } else {
+                results.innerHTML = '<div class="p-4 text-center text-gray-500">結果が見つかりません</div>';
+                results.classList.remove('hidden');
+            }
+        }
+        
+        // Table Functions
+        function updateTable() {
+            const tbody = document.getElementById('apiTableBody');
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+            const pageData = apiData.slice(start, end);
+            
+            tbody.innerHTML = pageData.map(row => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        ${new Date(row.timestamp).toLocaleString('ja-JP')}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${row.endpoint}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${row.model}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${row.tokens.toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            row.status === '成功' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400' :
+                            row.status === '処理中' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400' :
+                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-400'
+                        }">
+                            ${row.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${row.responseTime}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="showDetailModal('リクエスト詳細', ${row.id})" class="text-indigo-600 hover:text-indigo-900">詳細</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            updatePagination();
+            updateRecordCount();
+        }
+        
+        function updatePagination() {
+            const totalPages = Math.ceil(apiData.length / recordsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            let html = '';
+            
+            // Previous button
+            html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
+                     class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                     前へ
+                     </button>`;
+            
+            // Page numbers
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                html += `<button onclick="changePage(${i})" 
+                         class="px-3 py-1 ${i === currentPage ? 'bg-indigo-600 text-white' : 'border border-gray-300 dark:border-gray-600'} 
+                         rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                         ${i}
+                         </button>`;
+            }
+            
+            // Next button
+            html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} 
+                     class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">
+                     次へ
+                     </button>`;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function changePage(page) {
+            const totalPages = Math.ceil(apiData.length / recordsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                updateTable();
+            }
+        }
+        
+        function updateRecordCount() {
+            const start = (currentPage - 1) * recordsPerPage + 1;
+            const end = Math.min(currentPage * recordsPerPage, apiData.length);
+            
+            document.getElementById('totalRecords').textContent = apiData.length;
+            document.getElementById('showingRecords').textContent = `${start} - ${end}`;
+        }
+        
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            apiData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (column === 'tokens') {
+                    aVal = parseInt(aVal);
+                    bVal = parseInt(bVal);
+                } else if (column === 'responseTime') {
+                    aVal = parseInt(aVal);
+                    bVal = parseInt(bVal);
+                }
+                
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            updateTable();
+        }
+        
+        function filterTable() {
+            const query = document.getElementById('tableSearch').value.toLowerCase();
+            
+            if (query) {
+                const filtered = apiData.filter(row => 
+                    row.endpoint.toLowerCase().includes(query) ||
+                    row.model.toLowerCase().includes(query) ||
+                    row.status.toLowerCase().includes(query)
+                );
+                // Temporarily replace apiData for display
+                const temp = apiData;
+                apiData = filtered;
+                updateTable();
+                apiData = temp;
+            } else {
+                updateTable();
+            }
+        }
+        
+        function exportTableData() {
+            // Create CSV content
+            const headers = ['Timestamp', 'Endpoint', 'Model', 'Tokens', 'Status', 'Response Time'];
+            const rows = apiData.map(row => [
+                new Date(row.timestamp).toLocaleString('ja-JP'),
+                row.endpoint,
+                row.model,
+                row.tokens,
+                row.status,
+                row.responseTime
+            ]);
+            
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.join(',') + '\n';
+            });
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `api_activity_${Date.now()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('エクスポート完了', 'データがCSVファイルとしてダウンロードされました', 'success');
+        }
+        
+        // API Keys Table
+        function updateApiKeysTable() {
+            const tbody = document.getElementById('apiKeysTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = apiKeys.map(key => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${key.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
+                        <span class="blur-sm hover:blur-none transition-all cursor-pointer">${key.key.substring(0, 20)}...</span>
+                        <button onclick="copyApiKey('${key.key}')" class="ml-2 text-indigo-600 hover:text-indigo-900">
+                            コピー
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${key.created}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${key.lastUsed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="editApiKey(${key.id})" class="text-indigo-600 hover:text-indigo-900 mr-2">編集</button>
+                        <button onclick="deleteApiKey(${key.id})" class="text-red-600 hover:text-red-900">削除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function copyApiKey(key) {
+            navigator.clipboard.writeText(key);
+            showNotification('コピー完了', 'APIキーがクリップボードにコピーされました', 'success');
+        }
+        
+        function editApiKey(id) {
+            const key = apiKeys.find(k => k.id === id);
+            if (key) {
+                document.getElementById('modalTitle').textContent = 'APIキーを編集';
+                document.getElementById('keyName').value = key.name;
+                openModal();
+            }
+        }
+        
+        function deleteApiKey(id) {
+            if (confirm('このAPIキーを削除してもよろしいですか？')) {
+                apiKeys = apiKeys.filter(k => k.id !== id);
+                updateApiKeysTable();
+                showNotification('削除完了', 'APIキーが削除されました', 'success');
+            }
+        }
+        
+        // Charts
+        function initializeCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [2, 2]
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    }
+                }
+            };
+            
+            // Line Chart
+            const lineCtx = document.getElementById('lineChart');
+            if (lineCtx) {
+                lineChartInstance = new Chart(lineCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['1/8', '1/9', '1/10', '1/11', '1/12', '1/13', '1/14'],
+                        datasets: [{
+                            label: 'APIリクエスト',
+                            data: [32000, 35000, 33000, 38000, 42000, 45000, 48000],
+                            borderColor: 'rgb(99, 102, 241)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+            
+            // Bar Chart
+            const barCtx = document.getElementById('barChart');
+            if (barCtx) {
+                barChartInstance = new Chart(barCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['GPT-4', 'GPT-3.5', 'DALL-E', 'Whisper', 'Ada'],
+                        datasets: [{
+                            label: '使用量',
+                            data: [45000, 38000, 12000, 8000, 15000],
+                            backgroundColor: [
+                                'rgba(99, 102, 241, 0.8)',
+                                'rgba(139, 92, 246, 0.8)',
+                                'rgba(236, 72, 153, 0.8)',
+                                'rgba(251, 146, 60, 0.8)',
+                                'rgba(34, 197, 94, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: chartOptions
+                });
+            }
+        }
+        
+        function updateLineChart() {
+            const period = parseInt(document.getElementById('chartPeriod').value);
+            const labels = [];
+            const data = [];
+            
+            for (let i = period - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                data.push(Math.floor(Math.random() * 20000) + 30000);
+            }
+            
+            lineChartInstance.data.labels = labels;
+            lineChartInstance.data.datasets[0].data = data;
+            lineChartInstance.update();
+        }
+        
+        function refreshChart(type) {
+            if (type === 'bar' && barChartInstance) {
+                // Generate new random data
+                barChartInstance.data.datasets[0].data = barChartInstance.data.datasets[0].data.map(() => 
+                    Math.floor(Math.random() * 50000) + 10000
+                );
+                barChartInstance.update();
+                showNotification('更新完了', 'チャートが更新されました', 'success');
+            }
+        }
+        
+        // Modal Functions
         function openModal() {
             document.getElementById('modal').classList.remove('hidden');
         }
         
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modalForm').reset();
         }
         
-        // Notification functions
-        function showNotification() {
+        function handleModalSubmit(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('keyName').value;
+            const permission = document.getElementById('keyPermission').value;
+            const expiry = document.getElementById('keyExpiry').value;
+            
+            // Add new API key
+            const newKey = {
+                id: apiKeys.length + 1,
+                name: name,
+                key: `sk-fictional-${Math.random().toString(36).substr(2, 48)}`,
+                created: new Date().toLocaleDateString('ja-JP'),
+                lastUsed: '-',
+                permission: permission,
+                expiry: expiry
+            };
+            
+            apiKeys.push(newKey);
+            updateApiKeysTable();
+            closeModal();
+            showNotification('作成完了', `APIキー「${name}」が作成されました`, 'success');
+        }
+        
+        function showDetailModal(title, id) {
+            document.getElementById('modalTitle').textContent = title;
+            
+            if (id) {
+                const item = apiData.find(d => d.id === id);
+                if (item) {
+                    document.getElementById('modalForm').innerHTML = `
+                        <div class="space-y-3">
+                            <div><strong>ID:</strong> ${item.id}</div>
+                            <div><strong>タイムスタンプ:</strong> ${new Date(item.timestamp).toLocaleString('ja-JP')}</div>
+                            <div><strong>エンドポイント:</strong> ${item.endpoint}</div>
+                            <div><strong>モデル:</strong> ${item.model}</div>
+                            <div><strong>トークン数:</strong> ${item.tokens.toLocaleString()}</div>
+                            <div><strong>ステータス:</strong> ${item.status}</div>
+                            <div><strong>レスポンス時間:</strong> ${item.responseTime}</div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                                閉じる
+                            </button>
+                        </div>
+                    `;
+                }
+            } else {
+                // Show stats detail
+                document.getElementById('modalForm').innerHTML = `
+                    <div class="space-y-4">
+                        <p class="text-gray-600 dark:text-gray-400">詳細な統計情報と分析レポート</p>
+                        <div class="h-64 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-500">架空のチャート表示エリア</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                            閉じる
+                        </button>
+                    </div>
+                `;
+            }
+            
+            openModal();
+        }
+        
+        function showModelConfig(model) {
+            document.getElementById('modalTitle').textContent = `${model} 設定`;
+            document.getElementById('modalForm').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Temperature</label>
+                        <input type="range" min="0" max="100" value="70" class="w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Tokens</label>
+                        <input type="number" value="2048" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top P</label>
+                        <input type="range" min="0" max="100" value="100" class="w-full">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-lg">キャンセル</button>
+                    <button onclick="saveModelConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">保存</button>
+                </div>
+            `;
+            openModal();
+        }
+        
+        function saveModelConfig() {
+            closeModal();
+            showNotification('設定保存', 'モデル設定が保存されました', 'success');
+        }
+        
+        // Notifications
+        function showNotification(title, message, type = 'success') {
             const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationMessage').textContent = message;
+            
+            // Update icon based on type
+            if (type === 'error') {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+                icon.className = 'h-6 w-6 text-red-400';
+            } else if (type === 'warning') {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
+                icon.className = 'h-6 w-6 text-yellow-400';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+                icon.className = 'h-6 w-6 text-green-400';
+            }
+            
             notification.classList.remove('hidden');
             setTimeout(() => {
                 closeNotification();
@@ -511,148 +1394,180 @@
             document.getElementById('notification').classList.add('hidden');
         }
         
-        // Chart.js configurations
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        borderDash: [2, 2]
-                    }
-                }
-            }
-        };
-        
-        // Line Chart
-        const lineCtx = document.getElementById('lineChart').getContext('2d');
-        new Chart(lineCtx, {
-            type: 'line',
-            data: {
-                labels: ['1/8', '1/9', '1/10', '1/11', '1/12', '1/13', '1/14'],
-                datasets: [{
-                    label: 'APIリクエスト',
-                    data: [32000, 35000, 33000, 38000, 42000, 45000, 48000],
-                    borderColor: 'rgb(99, 102, 241)',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: chartOptions
-        });
-        
-        // Bar Chart
-        const barCtx = document.getElementById('barChart').getContext('2d');
-        new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: ['GPT-4', 'GPT-3.5', 'DALL-E', 'Whisper', 'Ada'],
-                datasets: [{
-                    label: '使用量',
-                    data: [45000, 38000, 12000, 8000, 15000],
-                    backgroundColor: [
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(139, 92, 246, 0.8)',
-                        'rgba(236, 72, 153, 0.8)',
-                        'rgba(251, 146, 60, 0.8)',
-                        'rgba(34, 197, 94, 0.8)'
-                    ]
-                }]
-            },
-            options: {
-                ...chartOptions,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-        
-        // Sidebar link active state
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                document.querySelectorAll('.sidebar-link').forEach(l => {
-                    l.classList.remove('bg-indigo-600', 'text-white');
-                    l.classList.add('text-gray-300', 'hover:bg-gray-800', 'hover:text-white');
-                });
-                this.classList.remove('text-gray-300', 'hover:bg-gray-800', 'hover:text-white');
-                this.classList.add('bg-indigo-600', 'text-white');
-            });
-        });
-        
-        // Simulate real-time updates
-        setInterval(() => {
-            // Update random stat
-            const stats = document.querySelectorAll('h3.text-2xl');
-            const randomStat = stats[Math.floor(Math.random() * stats.length)];
-            const currentValue = parseInt(randomStat.textContent.replace(/[^0-9]/g, ''));
-            const newValue = currentValue + Math.floor(Math.random() * 100 - 50);
+        function showNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('hidden');
             
-            if (randomStat.textContent.includes('¥')) {
-                randomStat.textContent = `¥${newValue.toLocaleString()}`;
-            } else if (randomStat.textContent.includes('ms')) {
-                randomStat.textContent = `${Math.max(10, newValue)}ms`;
-            } else {
-                randomStat.textContent = newValue.toLocaleString();
-            }
-            
-            // Add pulse animation
-            randomStat.classList.add('animate-pulse');
-            setTimeout(() => {
-                randomStat.classList.remove('animate-pulse');
-            }, 1000);
-        }, 5000);
-        
-        // Show welcome notification on load
-        window.addEventListener('load', () => {
-            setTimeout(showNotification, 1000);
-        });
-        
-        // Form validation example
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                closeModal();
-                showNotification();
-            });
-        });
-        
-        // Search functionality
-        const searchInput = document.querySelector('input[type="text"][placeholder*="検索"]');
-        searchInput.addEventListener('input', (e) => {
-            if (e.target.value.length > 2) {
-                console.log('架空の検索結果を取得中...', e.target.value);
-            }
-        });
-        
-        // Table row click handler
-        document.querySelectorAll('tbody tr').forEach(row => {
-            row.addEventListener('click', () => {
-                console.log('架空の詳細画面を表示');
-            });
-        });
-        
-        // Responsive sidebar
-        if (window.innerWidth < 1024) {
-            sidebar.classList.add('-translate-x-full');
+            // Mark all as read
+            notifications.forEach(n => n.read = true);
+            document.getElementById('notificationBadge').classList.add('hidden');
         }
         
+        function closeNotificationPanel() {
+            document.getElementById('notificationPanel').classList.add('hidden');
+        }
+        
+        function updateNotificationList() {
+            const list = document.getElementById('notificationList');
+            
+            list.innerHTML = notifications.map(n => `
+                <div class="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${n.read ? '' : 'bg-blue-50 dark:bg-blue-900/20'}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100">${n.title}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${n.message}</p>
+                        </div>
+                        <span class="text-xs text-gray-400">${n.time}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Update badge
+            const unreadCount = notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notificationBadge');
+            if (unreadCount > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        
+        // Playground
+        function runPlayground() {
+            const model = document.getElementById('playgroundModel').value;
+            const prompt = document.getElementById('playgroundPrompt').value;
+            const output = document.getElementById('playgroundOutput');
+            
+            if (!prompt) {
+                showNotification('エラー', 'プロンプトを入力してください', 'error');
+                return;
+            }
+            
+            output.innerHTML = '<div class="animate-pulse">処理中...</div>';
+            
+            setTimeout(() => {
+                const responses = [
+                    'これは架空のAIからの応答です。実際のAPIは接続されていません。',
+                    '申し訳ございませんが、このデモ環境では実際のAI処理は行われません。',
+                    'テスト環境のため、定型文での応答となります。',
+                    '架空のレスポンス: お問い合わせありがとうございます。'
+                ];
+                
+                output.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-semibold text-indigo-600">AI</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900 dark:text-gray-100">
+                                    ${responses[Math.floor(Math.random() * responses.length)]}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    モデル: ${model} | トークン: ${Math.floor(Math.random() * 500) + 100} | 時間: ${Math.floor(Math.random() * 1000) + 100}ms
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                showNotification('実行完了', 'プレイグラウンドの実行が完了しました', 'success');
+            }, 1500);
+        }
+        
+        function clearPlayground() {
+            document.getElementById('playgroundPrompt').value = '';
+            document.getElementById('playgroundOutput').innerHTML = '<p class="text-gray-500 dark:text-gray-400">結果がここに表示されます...</p>';
+        }
+        
+        // Settings
+        function saveSettings() {
+            showNotification('設定保存', 'すべての設定が保存されました', 'success');
+        }
+        
+        // Logout
+        function logout() {
+            if (confirm('ログアウトしてもよろしいですか？')) {
+                showNotification('ログアウト', 'ログアウトしました', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        }
+        
+        // Real-time Updates
+        function startRealtimeUpdates() {
+            setInterval(() => {
+                // Update stats
+                updateStats();
+                
+                // Add new API activity
+                if (Math.random() > 0.7) {
+                    addNewApiActivity();
+                }
+            }, 5000);
+        }
+        
+        function updateStats() {
+            // API Requests
+            const apiRequests = document.getElementById('apiRequests');
+            if (apiRequests) {
+                const current = parseInt(apiRequests.textContent.replace(/,/g, ''));
+                const change = Math.floor(Math.random() * 1000) - 500;
+                apiRequests.textContent = (current + change).toLocaleString();
+            }
+            
+            // Monthly Cost
+            const monthlyCost = document.getElementById('monthlyCost');
+            if (monthlyCost) {
+                const current = parseInt(monthlyCost.textContent.replace(/[¥,]/g, ''));
+                const change = Math.floor(Math.random() * 100) - 50;
+                monthlyCost.textContent = `¥${(current + change).toLocaleString()}`;
+            }
+            
+            // Response Time
+            const responseTime = document.getElementById('responseTime');
+            if (responseTime) {
+                const newTime = Math.floor(Math.random() * 50) + 10;
+                responseTime.textContent = `${newTime}ms`;
+            }
+            
+            // Active Users
+            const activeUsers = document.getElementById('activeUsers');
+            if (activeUsers) {
+                const current = parseInt(activeUsers.textContent.replace(/,/g, ''));
+                const change = Math.floor(Math.random() * 20) - 10;
+                activeUsers.textContent = (current + change).toLocaleString();
+            }
+        }
+        
+        function addNewApiActivity() {
+            const statuses = ['成功', '処理中', 'エラー'];
+            const models = ['GPT-4-Fictional', 'GPT-3.5-Turbo-Fictional', 'DALL-E-3-Fictional'];
+            const endpoints = ['/v1/chat/completions', '/v1/embeddings', '/v1/images/generations'];
+            
+            const newActivity = {
+                id: apiData.length + 1,
+                timestamp: new Date().toISOString(),
+                endpoint: endpoints[Math.floor(Math.random() * endpoints.length)],
+                model: models[Math.floor(Math.random() * models.length)],
+                tokens: Math.floor(Math.random() * 2000),
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                responseTime: Math.floor(Math.random() * 500) + 'ms'
+            };
+            
+            apiData.unshift(newActivity);
+            if (apiData.length > 100) {
+                apiData.pop();
+            }
+            
+            updateTable();
+        }
+        
+        // Responsive adjustments
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
-                sidebar.classList.remove('-translate-x-full');
+                document.getElementById('sidebar').classList.remove('-translate-x-full');
             }
         });
     </script>
