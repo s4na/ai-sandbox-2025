@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の画像編集ツール - PhotoMaster Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ツールバー */
+        .toolbar {
+            background: #2d2d2d;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #444;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid #444;
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+            margin-left: auto;
+        }
+
+        .tool-btn {
+            background: #3a3a3a;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tool-btn:hover {
+            background: #4a4a4a;
+            border-color: #666;
+        }
+
+        .tool-btn.active {
+            background: #5a6fdb;
+            border-color: #7a8fef;
+        }
+
+        .tool-btn.danger {
+            background: #d32f2f;
+        }
+
+        .tool-btn.danger:hover {
+            background: #f44336;
+        }
+
+        .tool-btn.success {
+            background: #388e3c;
+        }
+
+        .tool-btn.success:hover {
+            background: #4caf50;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            width: 80px;
+            background: #2d2d2d;
+            border-right: 1px solid #444;
+            padding: 60px 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .sidebar-tool {
+            width: 60px;
+            height: 60px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .sidebar-tool:hover {
+            background: #4a4a4a;
+            border-color: #666;
+        }
+
+        .sidebar-tool.active {
+            background: #5a6fdb;
+            border-color: #7a8fef;
+        }
+
+        .tool-tooltip {
+            position: absolute;
+            left: 70px;
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar-tool:hover .tool-tooltip {
+            opacity: 1;
+        }
+
+        /* メインエリア */
+        .main-area {
+            flex: 1;
+            display: flex;
+            padding-top: 50px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            position: relative;
+            overflow: auto;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            background: white;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .crop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        .crop-overlay.active {
+            display: block;
+            pointer-events: all;
+        }
+
+        .crop-box {
+            position: absolute;
+            border: 2px solid #5a6fdb;
+            background: rgba(90, 111, 219, 0.1);
+            cursor: move;
+        }
+
+        .crop-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #5a6fdb;
+            border: 1px solid #fff;
+        }
+
+        .crop-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .crop-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .crop-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .crop-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+        /* プロパティパネル */
+        .properties-panel {
+            width: 300px;
+            background: #2d2d2d;
+            border-left: 1px solid #444;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #bbb;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #ddd;
+        }
+
+        .control-value {
+            color: #5a6fdb;
+            font-weight: 500;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #5a6fdb;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #5a6fdb;
+            cursor: pointer;
+            border: none;
+        }
+
+        .hue-slider {
+            background: linear-gradient(to right, 
+                hsl(0, 100%, 50%), 
+                hsl(60, 100%, 50%), 
+                hsl(120, 100%, 50%), 
+                hsl(180, 100%, 50%), 
+                hsl(240, 100%, 50%), 
+                hsl(300, 100%, 50%), 
+                hsl(360, 100%, 50%));
+        }
+
+        /* フィルターボタン */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 10px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .filter-btn:hover {
+            background: #4a4a4a;
+            border-color: #666;
+        }
+
+        .filter-btn.active {
+            background: #5a6fdb;
+            border-color: #7a8fef;
+        }
+
+        /* プリセット */
+        .preset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .preset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-item:hover {
+            background: #4a4a4a;
+            border-color: #666;
+        }
+
+        .preset-name {
+            font-size: 13px;
+        }
+
+        .preset-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .preset-action {
+            width: 24px;
+            height: 24px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #aaa;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preset-action:hover {
+            background: #5a6fdb;
+            border-color: #7a8fef;
+            color: #fff;
+        }
+
+        /* ヒストリーパネル */
+        .history-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 100px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-panel.active {
+            display: block;
+        }
+
+        .history-item {
+            padding: 8px 12px;
+            background: #3a3a3a;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: #4a4a4a;
+        }
+
+        .history-item.current {
+            background: #5a6fdb;
+        }
+
+        /* アップロードエリア */
+        .upload-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .upload-overlay.hidden {
+            display: none;
+        }
+
+        .upload-box {
+            width: 500px;
+            padding: 40px;
+            background: #2d2d2d;
+            border: 2px dashed #5a6fdb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-box.dragover {
+            background: #3a3a3a;
+            border-color: #7a8fef;
+            transform: scale(1.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* 比較ビュー */
+        .compare-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+        }
+
+        .compare-view.active {
+            display: flex;
+        }
+
+        .compare-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #5a6fdb;
+            cursor: ew-resize;
+            z-index: 10;
+        }
+
+        .compare-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #5a6fdb;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* レイヤーパネル */
+        .layers-panel {
+            position: absolute;
+            top: 60px;
+            right: 320px;
+            width: 250px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .layers-panel.active {
+            display: block;
+        }
+
+        .layers-header {
+            padding: 10px 15px;
+            background: #252525;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .layers-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .add-layer-btn {
+            width: 24px;
+            height: 24px;
+            background: #5a6fdb;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layer-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .layer-item {
+            padding: 10px 15px;
+            background: #3a3a3a;
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .layer-item:hover {
+            background: #4a4a4a;
+        }
+
+        .layer-item.active {
+            background: #5a6fdb;
+        }
+
+        .layer-visibility {
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border: 1px solid #666;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .layer-visibility.visible::before {
+            content: '👁️';
+        }
+
+        .layer-name {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .layer-opacity {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* テキストツール */
+        .text-tool-panel {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            width: 300px;
+        }
+
+        .text-tool-panel.active {
+            display: block;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .text-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .text-control-btn {
+            padding: 6px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .text-control-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .text-control-btn.active {
+            background: #5a6fdb;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .font-size-input {
+            width: 60px;
+            padding: 5px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        /* ステータスバー */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #252525;
+            border-top: 1px solid #444;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #888;
+            z-index: 100;
+        }
+
+        .status-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .zoom-btn {
+            width: 24px;
+            height: 24px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .zoom-value {
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* モーダル */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 400px;
+            max-width: 600px;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #5a6fdb;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #7a8fef;
+        }
+
+        .btn-secondary {
+            background: #444;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        /* ローディング */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #444;
+            border-top: 3px solid #5a6fdb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .properties-panel {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: 300px;
+                border-left: none;
+                border-top: 1px solid #444;
+                transform: translateY(100%);
+                transition: transform 0.3s;
+            }
+
+            .properties-panel.active {
+                transform: translateY(0);
+            }
+
+            .sidebar {
+                width: 60px;
+            }
+
+            .sidebar-tool {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ツールバー -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="tool-btn" id="newBtn">📄 新規</button>
+                <button class="tool-btn" id="openBtn">📁 開く</button>
+                <button class="tool-btn" id="saveBtn">💾 保存</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="tool-btn" id="undoBtn">↶ 元に戻す</button>
+                <button class="tool-btn" id="redoBtn">↷ やり直し</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="tool-btn" id="compareBtn">🔄 比較</button>
+                <button class="tool-btn" id="layersBtn">📚 レイヤー</button>
+                <button class="tool-btn" id="historyBtn">📜 履歴</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="tool-btn danger" id="resetBtn">リセット</button>
+                <button class="tool-btn success" id="downloadBtn">ダウンロード</button>
+            </div>
+        </div>
+
+        <!-- サイドバー -->
+        <div class="sidebar">
+            <div class="sidebar-tool active" data-tool="select">
+                ↖️
+                <span class="tool-tooltip">選択ツール</span>
+            </div>
+            <div class="sidebar-tool" data-tool="crop">
+                ✂️
+                <span class="tool-tooltip">切り抜き</span>
+            </div>
+            <div class="sidebar-tool" data-tool="rotate">
+                🔄
+                <span class="tool-tooltip">回転</span>
+            </div>
+            <div class="sidebar-tool" data-tool="text">
+                📝
+                <span class="tool-tooltip">テキスト</span>
+            </div>
+            <div class="sidebar-tool" data-tool="draw">
+                ✏️
+                <span class="tool-tooltip">描画</span>
+            </div>
+            <div class="sidebar-tool" data-tool="shapes">
+                ⬜
+                <span class="tool-tooltip">図形</span>
+            </div>
+            <div class="sidebar-tool" data-tool="eraser">
+                🧹
+                <span class="tool-tooltip">消しゴム</span>
+            </div>
+        </div>
+
+        <!-- メインエリア -->
+        <div class="main-area">
+            <div class="canvas-container">
+                <div class="canvas-wrapper">
+                    <canvas id="canvas"></canvas>
+                    <div class="crop-overlay" id="cropOverlay">
+                        <div class="crop-box" id="cropBox">
+                            <div class="crop-handle nw"></div>
+                            <div class="crop-handle ne"></div>
+                            <div class="crop-handle sw"></div>
+                            <div class="crop-handle se"></div>
+                        </div>
+                    </div>
+                    <div class="compare-view" id="compareView">
+                        <div class="compare-slider" id="compareSlider">
+                            <div class="compare-handle">↔️</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- プロパティパネル -->
+            <div class="properties-panel">
+                <!-- 基本調整 -->
+                <div class="panel-section">
+                    <div class="panel-title">基本調整</div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>明度</span>
+                            <span class="control-value" id="brightnessValue">100%</span>
+                        </label>
+                        <input type="range" class="slider" id="brightnessSlider" min="0" max="200" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>コントラスト</span>
+                            <span class="control-value" id="contrastValue">100%</span>
+                        </label>
+                        <input type="range" class="slider" id="contrastSlider" min="0" max="200" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>彩度</span>
+                            <span class="control-value" id="saturationValue">100%</span>
+                        </label>
+                        <input type="range" class="slider" id="saturationSlider" min="0" max="200" value="100">
+                    </div>
+                </div>
+
+                <!-- カラー調整 -->
+                <div class="panel-section">
+                    <div class="panel-title">カラー調整</div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>色相</span>
+                            <span class="control-value" id="hueValue">0°</span>
+                        </label>
+                        <input type="range" class="slider hue-slider" id="hueSlider" min="-180" max="180" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>色温度</span>
+                            <span class="control-value" id="temperatureValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="temperatureSlider" min="-100" max="100" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>ティント</span>
+                            <span class="control-value" id="tintValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="tintSlider" min="-100" max="100" value="0">
+                    </div>
+                </div>
+
+                <!-- 詳細調整 -->
+                <div class="panel-section">
+                    <div class="panel-title">詳細調整</div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>シャープネス</span>
+                            <span class="control-value" id="sharpnessValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="sharpnessSlider" min="0" max="100" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>ぼかし</span>
+                            <span class="control-value" id="blurValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="blurSlider" min="0" max="20" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>ノイズ除去</span>
+                            <span class="control-value" id="denoiseValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="denoiseSlider" min="0" max="100" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <span>ビネット</span>
+                            <span class="control-value" id="vignetteValue">0</span>
+                        </label>
+                        <input type="range" class="slider" id="vignetteSlider" min="0" max="100" value="0">
+                    </div>
+                </div>
+
+                <!-- フィルター -->
+                <div class="panel-section">
+                    <div class="panel-title">フィルター</div>
+                    <div class="filter-grid">
+                        <button class="filter-btn" data-filter="none">なし</button>
+                        <button class="filter-btn" data-filter="grayscale">グレースケール</button>
+                        <button class="filter-btn" data-filter="sepia">セピア</button>
+                        <button class="filter-btn" data-filter="vintage">ビンテージ</button>
+                        <button class="filter-btn" data-filter="polaroid">ポラロイド</button>
+                        <button class="filter-btn" data-filter="cold">クール</button>
+                        <button class="filter-btn" data-filter="warm">ウォーム</button>
+                        <button class="filter-btn" data-filter="dramatic">ドラマチック</button>
+                        <button class="filter-btn" data-filter="blackwhite">モノクロ</button>
+                        <button class="filter-btn" data-filter="negative">ネガ</button>
+                    </div>
+                </div>
+
+                <!-- プリセット -->
+                <div class="panel-section">
+                    <div class="panel-title">プリセット</div>
+                    <div class="preset-list">
+                        <div class="preset-item">
+                            <span class="preset-name">ポートレート最適化</span>
+                            <div class="preset-actions">
+                                <span class="preset-action">✏️</span>
+                                <span class="preset-action">🗑️</span>
+                            </div>
+                        </div>
+                        <div class="preset-item">
+                            <span class="preset-name">風景強調</span>
+                            <div class="preset-actions">
+                                <span class="preset-action">✏️</span>
+                                <span class="preset-action">🗑️</span>
+                            </div>
+                        </div>
+                        <div class="preset-item">
+                            <span class="preset-name">モノクロアート</span>
+                            <div class="preset-actions">
+                                <span class="preset-action">✏️</span>
+                                <span class="preset-action">🗑️</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="tool-btn" style="width: 100%; margin-top: 10px;">+ プリセット保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ヒストリーパネル -->
+        <div class="history-panel" id="historyPanel">
+            <div class="panel-title">編集履歴</div>
+            <div class="history-item current">現在の状態</div>
+            <div class="history-item">フィルター適用: セピア</div>
+            <div class="history-item">明度調整: +20%</div>
+            <div class="history-item">画像を開く</div>
+        </div>
+
+        <!-- レイヤーパネル -->
+        <div class="layers-panel" id="layersPanel">
+            <div class="layers-header">
+                <span class="layers-title">レイヤー</span>
+                <button class="add-layer-btn">+</button>
+            </div>
+            <div class="layer-list">
+                <div class="layer-item active">
+                    <div class="layer-visibility visible"></div>
+                    <span class="layer-name">レイヤー 1</span>
+                    <span class="layer-opacity">100%</span>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-visibility visible"></div>
+                    <span class="layer-name">背景</span>
+                    <span class="layer-opacity">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- テキストツールパネル -->
+        <div class="text-tool-panel" id="textToolPanel">
+            <div class="panel-title">テキスト追加</div>
+            <input type="text" class="text-input" placeholder="テキストを入力...">
+            <div class="text-controls">
+                <button class="text-control-btn">太字</button>
+                <button class="text-control-btn">斜体</button>
+                <button class="text-control-btn">下線</button>
+            </div>
+            <div class="color-picker-group">
+                <label>色:</label>
+                <input type="color" class="color-picker" value="#ffffff">
+                <label>サイズ:</label>
+                <input type="number" class="font-size-input" value="24" min="8" max="200">
+            </div>
+            <button class="tool-btn" style="width: 100%; margin-top: 10px;">テキストを追加</button>
+        </div>
+
+        <!-- アップロードオーバーレイ -->
+        <div class="upload-overlay" id="uploadOverlay">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">画像をドラッグ&ドロップ</div>
+                <div class="upload-subtext">または クリックして選択</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+        </div>
+
+        <!-- ステータスバー -->
+        <div class="status-bar">
+            <div class="status-info">
+                <span>架空の PhotoMaster Pro</span>
+                <span id="imageInfo">画像未選択</span>
+                <span id="toolInfo">選択ツール</span>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomOut">−</button>
+                <span class="zoom-value" id="zoomValue">100%</span>
+                <button class="zoom-btn" id="zoomIn">+</button>
+                <button class="zoom-btn" id="zoomFit">⊡</button>
+            </div>
+        </div>
+
+        <!-- ローディング -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let originalImage = null;
+        let currentImage = new Image();
+        let history = [];
+        let historyIndex = -1;
+        let currentTool = 'select';
+        let layers = [];
+        let currentLayer = 0;
+        let zoom = 1;
+        let isComparing = false;
+        let cropData = null;
+        let currentFilter = 'none';
+
+        // 要素の取得
+        const uploadOverlay = document.getElementById('uploadOverlay');
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const historyPanel = document.getElementById('historyPanel');
+        const layersPanel = document.getElementById('layersPanel');
+        const textToolPanel = document.getElementById('textToolPanel');
+        const compareView = document.getElementById('compareView');
+        const cropOverlay = document.getElementById('cropOverlay');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // ツールボタン
+        const newBtn = document.getElementById('newBtn');
+        const openBtn = document.getElementById('openBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const compareBtn = document.getElementById('compareBtn');
+        const layersBtn = document.getElementById('layersBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // スライダー
+        const sliders = {
+            brightness: document.getElementById('brightnessSlider'),
+            contrast: document.getElementById('contrastSlider'),
+            saturation: document.getElementById('saturationSlider'),
+            hue: document.getElementById('hueSlider'),
+            temperature: document.getElementById('temperatureSlider'),
+            tint: document.getElementById('tintSlider'),
+            sharpness: document.getElementById('sharpnessSlider'),
+            blur: document.getElementById('blurSlider'),
+            denoise: document.getElementById('denoiseSlider'),
+            vignette: document.getElementById('vignetteSlider')
+        };
+
+        const values = {
+            brightness: document.getElementById('brightnessValue'),
+            contrast: document.getElementById('contrastValue'),
+            saturation: document.getElementById('saturationValue'),
+            hue: document.getElementById('hueValue'),
+            temperature: document.getElementById('temperatureValue'),
+            tint: document.getElementById('tintValue'),
+            sharpness: document.getElementById('sharpnessValue'),
+            blur: document.getElementById('blurValue'),
+            denoise: document.getElementById('denoiseValue'),
+            vignette: document.getElementById('vignetteValue')
+        };
+
+        // 初期化
+        function init() {
+            setupEventListeners();
+            updateToolInfo();
+        }
+
+        // イベントリスナーのセットアップ
+        function setupEventListeners() {
+            // ファイルアップロード
+            uploadBox.addEventListener('click', () => fileInput.click());
+            uploadBox.addEventListener('dragover', handleDragOver);
+            uploadBox.addEventListener('dragleave', handleDragLeave);
+            uploadBox.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // ツールバーボタン
+            newBtn.addEventListener('click', newImage);
+            openBtn.addEventListener('click', () => fileInput.click());
+            saveBtn.addEventListener('click', saveImage);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            compareBtn.addEventListener('click', toggleCompare);
+            layersBtn.addEventListener('click', toggleLayers);
+            historyBtn.addEventListener('click', toggleHistory);
+            resetBtn.addEventListener('click', resetImage);
+            downloadBtn.addEventListener('click', downloadImage);
+
+            // サイドバーツール
+            document.querySelectorAll('.sidebar-tool').forEach(tool => {
+                tool.addEventListener('click', () => selectTool(tool.dataset.tool));
+            });
+
+            // スライダー
+            Object.keys(sliders).forEach(key => {
+                sliders[key].addEventListener('input', () => {
+                    updateValueDisplay(key);
+                    applyFilters();
+                });
+            });
+
+            // フィルターボタン
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyFilterPreset(btn.dataset.filter));
+            });
+
+            // プリセット
+            document.querySelectorAll('.preset-item').forEach(item => {
+                item.addEventListener('click', () => applyPreset(item));
+            });
+
+            // ズームコントロール
+            document.getElementById('zoomIn').addEventListener('click', () => changeZoom(0.1));
+            document.getElementById('zoomOut').addEventListener('click', () => changeZoom(-0.1));
+            document.getElementById('zoomFit').addEventListener('click', fitToScreen);
+
+            // キーボードショートカット
+            document.addEventListener('keydown', handleKeyboard);
+        }
+
+        // ドラッグ&ドロップ処理
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        // ファイル処理
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('画像ファイルを選択してください');
+                return;
+            }
+
+            showLoading();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage.onload = () => {
+                    canvas.width = currentImage.width;
+                    canvas.height = currentImage.height;
+                    ctx.drawImage(currentImage, 0, 0);
+                    originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    uploadOverlay.classList.add('hidden');
+                    hideLoading();
+                    
+                    // ステータス更新
+                    updateImageInfo();
+                    
+                    // 履歴に追加
+                    addToHistory('画像を開く');
+                    
+                    // キャンバスサイズ調整
+                    fitToScreen();
+                };
+                currentImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 画像情報更新
+        function updateImageInfo() {
+            const info = document.getElementById('imageInfo');
+            if (originalImage) {
+                info.textContent = `${originalImage.width} × ${originalImage.height}px`;
+            } else {
+                info.textContent = '画像未選択';
+            }
+        }
+
+        // ツール選択
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.sidebar-tool').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+            updateToolInfo();
+            
+            // ツール固有の処理
+            switch(tool) {
+                case 'crop':
+                    enableCrop();
+                    break;
+                case 'text':
+                    textToolPanel.classList.add('active');
+                    break;
+                default:
+                    disableCrop();
+                    textToolPanel.classList.remove('active');
+            }
+        }
+
+        // ツール情報更新
+        function updateToolInfo() {
+            const toolNames = {
+                'select': '選択ツール',
+                'crop': '切り抜きツール',
+                'rotate': '回転ツール',
+                'text': 'テキストツール',
+                'draw': '描画ツール',
+                'shapes': '図形ツール',
+                'eraser': '消しゴムツール'
+            };
+            document.getElementById('toolInfo').textContent = toolNames[currentTool] || '';
+        }
+
+        // フィルター適用
+        function applyFilters() {
+            if (!originalImage) return;
+
+            showLoading();
+            requestAnimationFrame(() => {
+                const imageData = ctx.createImageData(originalImage.width, originalImage.height);
+                const data = imageData.data;
+                const original = originalImage.data;
+
+                // 各調整値を取得
+                const brightness = parseFloat(sliders.brightness.value) / 100;
+                const contrast = parseFloat(sliders.contrast.value) / 100;
+                const saturation = parseFloat(sliders.saturation.value) / 100;
+                const hue = parseFloat(sliders.hue.value);
+                const temperature = parseFloat(sliders.temperature.value);
+                const tint = parseFloat(sliders.tint.value);
+                const sharpness = parseFloat(sliders.sharpness.value) / 100;
+                const blur = parseFloat(sliders.blur.value);
+                const vignette = parseFloat(sliders.vignette.value) / 100;
+
+                // ピクセル処理
+                for (let i = 0; i < original.length; i += 4) {
+                    let r = original[i];
+                    let g = original[i + 1];
+                    let b = original[i + 2];
+
+                    // フィルター適用
+                    if (currentFilter !== 'none') {
+                        [r, g, b] = applyFilterEffect(r, g, b, currentFilter);
+                    }
+
+                    // HSL変換と色相・彩度調整
+                    let [h, s, l] = rgbToHsl(r, g, b);
+                    h = (h + hue + 360) % 360;
+                    s = Math.min(1, s * saturation);
+                    [r, g, b] = hslToRgb(h, s, l);
+
+                    // 明度・コントラスト
+                    r = Math.min(255, r * brightness);
+                    g = Math.min(255, g * brightness);
+                    b = Math.min(255, b * brightness);
+
+                    r = Math.min(255, Math.max(0, ((r - 128) * contrast) + 128));
+                    g = Math.min(255, Math.max(0, ((g - 128) * contrast) + 128));
+                    b = Math.min(255, Math.max(0, ((b - 128) * contrast) + 128));
+
+                    // 色温度
+                    if (temperature > 0) {
+                        r = Math.min(255, r + temperature);
+                        b = Math.max(0, b - temperature / 2);
+                    } else {
+                        r = Math.max(0, r + temperature);
+                        b = Math.min(255, b - temperature / 2);
+                    }
+
+                    // ティント
+                    if (tint > 0) {
+                        g = Math.min(255, g + tint);
+                    } else {
+                        g = Math.max(0, g + tint);
+                    }
+
+                    // ビネット効果
+                    if (vignette > 0) {
+                        const x = (i / 4) % canvas.width;
+                        const y = Math.floor((i / 4) / canvas.width);
+                        const centerX = canvas.width / 2;
+                        const centerY = canvas.height / 2;
+                        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                        const maxDistance = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
+                        const vignetteAmount = (distance / maxDistance) * vignette;
+                        r = Math.max(0, r * (1 - vignetteAmount));
+                        g = Math.max(0, g * (1 - vignetteAmount));
+                        b = Math.max(0, b * (1 - vignetteAmount));
+                    }
+
+                    data[i] = r;
+                    data[i + 1] = g;
+                    data[i + 2] = b;
+                    data[i + 3] = original[i + 3];
+                }
+
+                // ぼかし処理
+                if (blur > 0) {
+                    applyBlur(imageData, blur);
+                }
+
+                // シャープネス処理
+                if (sharpness > 0) {
+                    applySharpness(imageData, sharpness);
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                hideLoading();
+            });
+        }
+
+        // フィルターエフェクト
+        function applyFilterEffect(r, g, b, filter) {
+            switch(filter) {
+                case 'grayscale':
+                    const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                    return [gray, gray, gray];
+                case 'sepia':
+                    return [
+                        Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189)),
+                        Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168)),
+                        Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131))
+                    ];
+                case 'vintage':
+                    return [
+                        Math.min(255, r * 1.2),
+                        Math.min(255, g * 1.0),
+                        Math.min(255, b * 0.8)
+                    ];
+                case 'cold':
+                    return [r * 0.9, g * 0.95, Math.min(255, b * 1.1)];
+                case 'warm':
+                    return [Math.min(255, r * 1.1), g * 0.95, b * 0.9];
+                case 'dramatic':
+                    return [
+                        Math.min(255, Math.pow(r / 255, 0.5) * 255),
+                        Math.min(255, Math.pow(g / 255, 0.5) * 255),
+                        Math.min(255, Math.pow(b / 255, 0.5) * 255)
+                    ];
+                case 'blackwhite':
+                    const bw = r * 0.299 + g * 0.587 + b * 0.114 > 128 ? 255 : 0;
+                    return [bw, bw, bw];
+                case 'negative':
+                    return [255 - r, 255 - g, 255 - b];
+                case 'polaroid':
+                    return [
+                        Math.min(255, r * 1.1),
+                        Math.min(255, g * 1.05),
+                        Math.min(255, b * 0.95)
+                    ];
+                default:
+                    return [r, g, b];
+            }
+        }
+
+        // ぼかし処理
+        function applyBlur(imageData, radius) {
+            // 簡易的なボックスブラー実装
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            const kernelSize = Math.ceil(radius) * 2 + 1;
+            const kernel = new Array(kernelSize * kernelSize).fill(1 / (kernelSize * kernelSize));
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let r = 0, g = 0, b = 0, a = 0;
+                    let kernelSum = 0;
+                    
+                    for (let ky = -Math.ceil(radius); ky <= Math.ceil(radius); ky++) {
+                        for (let kx = -Math.ceil(radius); kx <= Math.ceil(radius); kx++) {
+                            const px = Math.min(width - 1, Math.max(0, x + kx));
+                            const py = Math.min(height - 1, Math.max(0, y + ky));
+                            const idx = (py * width + px) * 4;
+                            const weight = kernel[(ky + Math.ceil(radius)) * kernelSize + (kx + Math.ceil(radius))];
+                            
+                            r += data[idx] * weight;
+                            g += data[idx + 1] * weight;
+                            b += data[idx + 2] * weight;
+                            a += data[idx + 3] * weight;
+                            kernelSum += weight;
+                        }
+                    }
+                    
+                    const idx = (y * width + x) * 4;
+                    output[idx] = r / kernelSum;
+                    output[idx + 1] = g / kernelSum;
+                    output[idx + 2] = b / kernelSum;
+                    output[idx + 3] = a / kernelSum;
+                }
+            }
+            
+            imageData.data.set(output);
+        }
+
+        // シャープネス処理
+        function applySharpness(imageData, amount) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new Uint8ClampedArray(data);
+            
+            // シャープネスカーネル
+            const kernel = [
+                0, -amount, 0,
+                -amount, 1 + 4 * amount, -amount,
+                0, -amount, 0
+            ];
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    for (let c = 0; c < 3; c++) {
+                        let sum = 0;
+                        for (let ky = -1; ky <= 1; ky++) {
+                            for (let kx = -1; kx <= 1; kx++) {
+                                const idx = ((y + ky) * width + (x + kx)) * 4 + c;
+                                sum += data[idx] * kernel[(ky + 1) * 3 + (kx + 1)];
+                            }
+                        }
+                        const idx = (y * width + x) * 4 + c;
+                        output[idx] = Math.min(255, Math.max(0, sum));
+                    }
+                }
+            }
+            
+            imageData.data.set(output);
+        }
+
+        // RGB to HSL
+        function rgbToHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                switch (max) {
+                    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                    case g: h = ((b - r) / d + 2) / 6; break;
+                    case b: h = ((r - g) / d + 4) / 6; break;
+                }
+            }
+
+            return [h * 360, s, l];
+        }
+
+        // HSL to RGB
+        function hslToRgb(h, s, l) {
+            h /= 360;
+            let r, g, b;
+
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        // 値表示更新
+        function updateValueDisplay(key) {
+            const value = sliders[key].value;
+            switch(key) {
+                case 'hue':
+                    values[key].textContent = `${value}°`;
+                    break;
+                case 'temperature':
+                case 'tint':
+                case 'sharpness':
+                case 'blur':
+                case 'denoise':
+                case 'vignette':
+                    values[key].textContent = value;
+                    break;
+                default:
+                    values[key].textContent = `${value}%`;
+            }
+        }
+
+        // フィルタープリセット適用
+        function applyFilterPreset(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+            applyFilters();
+            addToHistory(`フィルター適用: ${filter}`);
+        }
+
+        // プリセット適用
+        function applyPreset(preset) {
+            const presetName = preset.querySelector('.preset-name').textContent;
+            
+            // プリセット値の設定（架空の値）
+            const presets = {
+                'ポートレート最適化': {
+                    brightness: 110,
+                    contrast: 105,
+                    saturation: 95,
+                    temperature: 5,
+                    sharpness: 20
+                },
+                '風景強調': {
+                    brightness: 105,
+                    contrast: 120,
+                    saturation: 130,
+                    sharpness: 40,
+                    vignette: 20
+                },
+                'モノクロアート': {
+                    brightness: 100,
+                    contrast: 130,
+                    saturation: 0,
+                    sharpness: 30
+                }
+            };
+
+            const settings = presets[presetName];
+            if (settings) {
+                Object.keys(settings).forEach(key => {
+                    if (sliders[key]) {
+                        sliders[key].value = settings[key];
+                        updateValueDisplay(key);
+                    }
+                });
+                applyFilters();
+                addToHistory(`プリセット適用: ${presetName}`);
+            }
+        }
+
+        // 履歴管理
+        function addToHistory(action) {
+            if (originalImage) {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                history = history.slice(0, historyIndex + 1);
+                history.push({
+                    action: action,
+                    imageData: imageData
+                });
+                historyIndex++;
+                updateHistoryPanel();
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const state = history[historyIndex];
+                ctx.putImageData(state.imageData, 0, 0);
+                updateHistoryPanel();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                const state = history[historyIndex];
+                ctx.putImageData(state.imageData, 0, 0);
+                updateHistoryPanel();
+            }
+        }
+
+        function updateHistoryPanel() {
+            const panel = historyPanel;
+            const items = panel.querySelectorAll('.history-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('current', index === historyIndex);
+            });
+        }
+
+        // 切り抜き機能
+        function enableCrop() {
+            cropOverlay.classList.add('active');
+            initCrop();
+        }
+
+        function disableCrop() {
+            cropOverlay.classList.remove('active');
+        }
+
+        function initCrop() {
+            const cropBox = document.getElementById('cropBox');
+            let isResizing = false;
+            let isDragging = false;
+            let startX, startY;
+            let initialLeft, initialTop, initialWidth, initialHeight;
+            
+            cropBox.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('crop-handle')) {
+                    isResizing = true;
+                } else {
+                    isDragging = true;
+                }
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = cropBox.offsetLeft;
+                initialTop = cropBox.offsetTop;
+                initialWidth = cropBox.offsetWidth;
+                initialHeight = cropBox.offsetHeight;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing && !isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                if (isDragging) {
+                    cropBox.style.left = initialLeft + dx + 'px';
+                    cropBox.style.top = initialTop + dy + 'px';
+                } else if (isResizing) {
+                    // リサイズ処理（簡略化）
+                    cropBox.style.width = initialWidth + dx + 'px';
+                    cropBox.style.height = initialHeight + dy + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                isDragging = false;
+            });
+        }
+
+        // 比較ビュー
+        function toggleCompare() {
+            isComparing = !isComparing;
+            compareView.classList.toggle('active', isComparing);
+            compareBtn.classList.toggle('active', isComparing);
+            
+            if (isComparing && originalImage) {
+                initCompareView();
+            }
+        }
+
+        function initCompareView() {
+            const slider = document.getElementById('compareSlider');
+            let isDragging = false;
+            
+            slider.addEventListener('mousedown', () => {
+                isDragging = true;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                slider.style.left = Math.max(0, Math.min(rect.width, x)) + 'px';
+                
+                // 比較表示の更新
+                updateCompareView(x / rect.width);
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+
+        function updateCompareView(position) {
+            // 左側に元画像、右側に編集後の画像を表示
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 現在の画像を保存
+            const currentImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // 元画像の左側部分を描画
+            ctx.putImageData(originalImage, 0, 0);
+            const leftPart = ctx.getImageData(0, 0, canvas.width * position, canvas.height);
+            
+            // 編集後の画像を復元
+            ctx.putImageData(currentImageData, 0, 0);
+            
+            // 左側部分を上書き
+            tempCtx.putImageData(leftPart, 0, 0);
+            ctx.drawImage(tempCanvas, 0, 0, canvas.width * position, canvas.height, 0, 0, canvas.width * position, canvas.height);
+        }
+
+        // レイヤー管理
+        function toggleLayers() {
+            layersPanel.classList.toggle('active');
+            layersBtn.classList.toggle('active');
+        }
+
+        // 履歴パネル
+        function toggleHistory() {
+            historyPanel.classList.toggle('active');
+            historyBtn.classList.toggle('active');
+        }
+
+        // 画像操作
+        function newImage() {
+            if (confirm('新規画像を作成しますか？現在の編集内容は失われます。')) {
+                uploadOverlay.classList.remove('hidden');
+                resetAll();
+            }
+        }
+
+        function saveImage() {
+            if (originalImage) {
+                // 現在の状態を保存
+                originalImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                alert('画像を保存しました（架空の機能）');
+            }
+        }
+
+        function resetImage() {
+            if (originalImage && confirm('すべての編集をリセットしますか？')) {
+                resetAll();
+                ctx.putImageData(originalImage, 0, 0);
+            }
+        }
+
+        function resetAll() {
+            // スライダーをリセット
+            Object.keys(sliders).forEach(key => {
+                const defaultValues = {
+                    brightness: 100,
+                    contrast: 100,
+                    saturation: 100,
+                    hue: 0,
+                    temperature: 0,
+                    tint: 0,
+                    sharpness: 0,
+                    blur: 0,
+                    denoise: 0,
+                    vignette: 0
+                };
+                sliders[key].value = defaultValues[key] || 0;
+                updateValueDisplay(key);
+            });
+            
+            currentFilter = 'none';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-filter="none"]').classList.add('active');
+            
+            if (originalImage) {
+                ctx.putImageData(originalImage, 0, 0);
+            }
+        }
+
+        function downloadImage() {
+            if (!originalImage) {
+                alert('画像が選択されていません');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = 'edited-image.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // ズーム機能
+        function changeZoom(delta) {
+            zoom = Math.max(0.1, Math.min(5, zoom + delta));
+            updateZoom();
+        }
+
+        function updateZoom() {
+            canvas.style.transform = `scale(${zoom})`;
+            document.getElementById('zoomValue').textContent = Math.round(zoom * 100) + '%';
+        }
+
+        function fitToScreen() {
+            if (!originalImage) return;
+            
+            const container = document.querySelector('.canvas-container');
+            const containerWidth = container.clientWidth - 100;
+            const containerHeight = container.clientHeight - 100;
+            
+            const scaleX = containerWidth / canvas.width;
+            const scaleY = containerHeight / canvas.height;
+            
+            zoom = Math.min(scaleX, scaleY, 1);
+            updateZoom();
+        }
+
+        // キーボードショートカット
+        function handleKeyboard(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'z':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            redo();
+                        } else {
+                            undo();
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        saveImage();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        fileInput.click();
+                        break;
+                    case '=':
+                    case '+':
+                        e.preventDefault();
+                        changeZoom(0.1);
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        changeZoom(-0.1);
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        zoom = 1;
+                        updateZoom();
+                        break;
+                }
+            }
+        }
+
+        // ローディング表示
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
+
+        // 初期化実行
+        init();
+    </script>
+</body>
+</html>
