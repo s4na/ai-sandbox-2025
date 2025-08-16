@@ -23,6 +23,8 @@
             --accent-hover: #0e8f6f;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --info: #3b82f6;
+            --success: #22c55e;
             --card-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
 
@@ -59,6 +61,7 @@
             font-size: 18px;
             font-weight: 600;
             color: var(--text-primary);
+            cursor: pointer;
         }
 
         .logo-icon {
@@ -96,6 +99,7 @@
             text-decoration: none;
             transition: all 0.2s;
             margin-bottom: 2px;
+            cursor: pointer;
         }
 
         .nav-item:hover {
@@ -121,6 +125,14 @@
             flex: 1;
             margin-left: 260px;
             padding: 32px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
         }
 
         .header {
@@ -249,6 +261,15 @@
             border: 1px solid var(--border-color);
         }
 
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
         .api-key-list {
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -357,13 +378,433 @@
             font-size: 12px;
             color: var(--text-secondary);
         }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--border-color);
+        }
+
+        .playground-container {
+            display: flex;
+            gap: 24px;
+            height: calc(100vh - 200px);
+        }
+
+        .playground-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playground-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playground-input {
+            flex: 1;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            resize: none;
+        }
+
+        .playground-output {
+            flex: 1;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-y: auto;
+        }
+
+        .assistant-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .assistant-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .assistant-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .assistant-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .assistant-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .settings-group {
+            margin-bottom: 32px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .settings-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle.active {
+            background: var(--accent);
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle.active .toggle-thumb {
+            transform: translateX(24px);
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .team-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .team-info {
+            flex: 1;
+        }
+
+        .team-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .team-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-admin {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-member {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .pricing-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+            position: relative;
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .pricing-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .pricing-period {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .pricing-feature {
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .doc-content {
+            max-width: 800px;
+        }
+
+        .doc-section {
+            margin-bottom: 40px;
+        }
+
+        .doc-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .doc-subtitle {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+
+        .doc-text {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .copy-btn {
+            float: right;
+            background: #2d2d2d;
+            color: #d4d4d4;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: #3d3d3d;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
+                <div class="logo" onclick="navigateTo('dashboard')">
                     <div class="logo-icon">AI</div>
                     <span>架空のAI Platform</span>
                 </div>
@@ -372,15 +813,15 @@
             <nav>
                 <div class="nav-section">
                     <div class="nav-title">メイン</div>
-                    <a href="#" class="nav-item active">
+                    <a class="nav-item active" data-page="dashboard">
                         <span class="nav-icon">📊</span>
                         <span>ダッシュボード</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="playground">
                         <span class="nav-icon">🎮</span>
                         <span>プレイグラウンド</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="assistants">
                         <span class="nav-icon">🤖</span>
                         <span>アシスタント</span>
                     </a>
@@ -388,15 +829,15 @@
 
                 <div class="nav-section">
                     <div class="nav-title">開発</div>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="api-keys">
                         <span class="nav-icon">🔑</span>
                         <span>APIキー</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="docs">
                         <span class="nav-icon">📚</span>
                         <span>ドキュメント</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="usage">
                         <span class="nav-icon">📈</span>
                         <span>使用状況</span>
                     </a>
@@ -404,15 +845,15 @@
 
                 <div class="nav-section">
                     <div class="nav-title">設定</div>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="billing">
                         <span class="nav-icon">💳</span>
                         <span>料金プラン</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="team">
                         <span class="nav-icon">👥</span>
                         <span>チーム管理</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a class="nav-item" data-page="settings">
                         <span class="nav-icon">⚙️</span>
                         <span>設定</span>
                     </a>
@@ -421,128 +862,922 @@
         </aside>
 
         <main class="main-content">
-            <div class="header">
-                <h1 class="page-title">ダッシュボード</h1>
-                <div class="header-actions">
-                    <button class="btn btn-primary">
-                        <span>➕</span>
-                        <span>新規プロジェクト</span>
-                    </button>
-                    <div class="user-menu">
-                        <div class="user-avatar">TY</div>
-                        <span>架空 太郎</span>
-                        <span>▼</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="warning-banner">
-                ⚠️ これは架空のAI管理画面のデモです。実際のAPIやサービスとは一切関係ありません。
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">今月のAPIコール数</div>
-                    <div class="stat-value">125,432</div>
-                    <div class="stat-change">↑ 先月比 +23%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">トークン使用量</div>
-                    <div class="stat-value">8.5M</div>
-                    <div class="stat-change">↑ 先月比 +15%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">アクティブモデル</div>
-                    <div class="stat-value">4</div>
-                    <div class="stat-change">GPT-4, GPT-3.5他</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">現在の料金</div>
-                    <div class="stat-value">¥12,450</div>
-                    <div class="stat-change">月額上限: ¥50,000</div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">APIキー管理</h2>
-                    <button class="btn btn-primary">新規APIキー作成</button>
-                </div>
-                <div class="api-key-list">
-                    <div class="api-key-item">
-                        <div class="api-key-info">
-                            <div class="api-key-name">Production API Key</div>
-                            <div class="api-key-value">sk-proj-...YhK3 (架空のキー)</div>
-                            <div class="api-key-meta">作成日: 2025年1月10日 | 最終使用: 2時間前</div>
+            <!-- Dashboard Page -->
+            <div class="page active" id="dashboard">
+                <div class="header">
+                    <h1 class="page-title">ダッシュボード</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showModal('new-project')">
+                            <span>➕</span>
+                            <span>新規プロジェクト</span>
+                        </button>
+                        <div class="user-menu" onclick="showModal('user-profile')">
+                            <div class="user-avatar">TY</div>
+                            <span>架空 太郎</span>
+                            <span>▼</span>
                         </div>
-                        <button class="btn btn-secondary">管理</button>
                     </div>
-                    <div class="api-key-item">
-                        <div class="api-key-info">
-                            <div class="api-key-name">Development API Key</div>
-                            <div class="api-key-value">sk-proj-...Xm9a (架空のキー)</div>
-                            <div class="api-key-meta">作成日: 2025年1月5日 | 最終使用: 30分前</div>
+                </div>
+
+                <div class="warning-banner">
+                    ⚠️ これは架空のAI管理画面のデモです。実際のAPIやサービスとは一切関係ありません。
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">今月のAPIコール数</div>
+                        <div class="stat-value">125,432</div>
+                        <div class="stat-change">↑ 先月比 +23%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">トークン使用量</div>
+                        <div class="stat-value">8.5M</div>
+                        <div class="stat-change">↑ 先月比 +15%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">アクティブモデル</div>
+                        <div class="stat-value">4</div>
+                        <div class="stat-change">GPT-4, GPT-3.5他</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">現在の料金</div>
+                        <div class="stat-value">¥12,450</div>
+                        <div class="stat-change">月額上限: ¥50,000</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">APIキー管理</h2>
+                        <button class="btn btn-primary" onclick="showModal('new-api-key')">新規APIキー作成</button>
+                    </div>
+                    <div class="api-key-list">
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Production API Key</div>
+                                <div class="api-key-value">sk-proj-...YhK3 (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2025年1月10日 | 最終使用: 2時間前</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="showModal('manage-api-key')">管理</button>
                         </div>
-                        <button class="btn btn-secondary">管理</button>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Development API Key</div>
+                                <div class="api-key-value">sk-proj-...Xm9a (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2025年1月5日 | 最終使用: 30分前</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="showModal('manage-api-key')">管理</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">使用量の推移（過去7日間）</h2>
+                        <select class="btn btn-secondary">
+                            <option>トークン数</option>
+                            <option>APIコール数</option>
+                            <option>料金</option>
+                        </select>
+                    </div>
+                    <div class="usage-chart">
+                        <div class="usage-bar" style="height: 60%"></div>
+                        <div class="usage-bar" style="height: 75%"></div>
+                        <div class="usage-bar" style="height: 45%"></div>
+                        <div class="usage-bar" style="height: 80%"></div>
+                        <div class="usage-bar" style="height: 65%"></div>
+                        <div class="usage-bar" style="height: 90%"></div>
+                        <div class="usage-bar" style="height: 70%"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">利用可能なモデル</h2>
+                    </div>
+                    <div class="model-grid">
+                        <div class="model-card selected">
+                            <div class="model-name">GPT-4 Turbo (架空)</div>
+                            <div class="model-desc">最新の高性能モデル</div>
+                        </div>
+                        <div class="model-card">
+                            <div class="model-name">GPT-3.5 Turbo (架空)</div>
+                            <div class="model-desc">高速・低コスト</div>
+                        </div>
+                        <div class="model-card">
+                            <div class="model-name">DALL-E 3 (架空)</div>
+                            <div class="model-desc">画像生成モデル</div>
+                        </div>
+                        <div class="model-card">
+                            <div class="model-name">Whisper (架空)</div>
+                            <div class="model-desc">音声認識モデル</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">使用量の推移（過去7日間）</h2>
-                    <select class="btn btn-secondary">
-                        <option>トークン数</option>
-                        <option>APIコール数</option>
-                        <option>料金</option>
-                    </select>
+            <!-- Playground Page -->
+            <div class="page" id="playground">
+                <div class="header">
+                    <h1 class="page-title">プレイグラウンド</h1>
+                    <div class="header-actions">
+                        <select class="btn btn-secondary">
+                            <option>GPT-4 Turbo (架空)</option>
+                            <option>GPT-3.5 Turbo (架空)</option>
+                            <option>Claude 3 (架空)</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="generateResponse()">
+                            <span>▶️</span>
+                            <span>実行</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="usage-chart">
-                    <div class="usage-bar" style="height: 60%"></div>
-                    <div class="usage-bar" style="height: 75%"></div>
-                    <div class="usage-bar" style="height: 45%"></div>
-                    <div class="usage-bar" style="height: 80%"></div>
-                    <div class="usage-bar" style="height: 65%"></div>
-                    <div class="usage-bar" style="height: 90%"></div>
-                    <div class="usage-bar" style="height: 70%"></div>
+
+                <div class="section">
+                    <div class="playground-container">
+                        <div class="playground-left">
+                            <h3 style="margin-bottom: 12px;">入力</h3>
+                            <textarea class="playground-input" id="playground-input" placeholder="ここにプロンプトを入力してください...
+
+例: 「こんにちは」を10ヶ国語で言ってください。"></textarea>
+                        </div>
+                        <div class="playground-right">
+                            <h3 style="margin-bottom: 12px;">出力</h3>
+                            <div class="playground-output" id="playground-output">
+                                <div style="color: var(--text-muted);">
+                                    実行ボタンを押すと、ここに架空のAIレスポンスが表示されます。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">パラメータ設定</h2>
+                    <div class="form-group">
+                        <label class="form-label">Temperature (0.0 - 2.0)</label>
+                        <input type="range" class="form-input" min="0" max="2" step="0.1" value="0.7">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Tokens</label>
+                        <input type="number" class="form-input" value="2048">
+                    </div>
                 </div>
             </div>
 
-            <div class="section">
-                <div class="section-header">
-                    <h2 class="section-title">利用可能なモデル</h2>
+            <!-- Assistants Page -->
+            <div class="page" id="assistants">
+                <div class="header">
+                    <h1 class="page-title">アシスタント</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showModal('new-assistant')">
+                            <span>➕</span>
+                            <span>新規アシスタント作成</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="model-grid">
-                    <div class="model-card selected">
-                        <div class="model-name">GPT-4 Turbo (架空)</div>
-                        <div class="model-desc">最新の高性能モデル</div>
+
+                <div class="warning-banner">
+                    💡 架空のAIアシスタント機能です。カスタムAIアシスタントを作成・管理できます（デモ）。
+                </div>
+
+                <div class="assistant-card" onclick="showModal('assistant-detail')">
+                    <div class="assistant-name">カスタマーサポートBot (架空)</div>
+                    <div class="assistant-desc">お客様からの問い合わせに24時間365日対応する架空のAIアシスタント</div>
+                    <div class="assistant-meta">
+                        <span>作成: 2025/01/15</span>
+                        <span>使用回数: 1,234</span>
+                        <span>モデル: GPT-4</span>
                     </div>
-                    <div class="model-card">
-                        <div class="model-name">GPT-3.5 Turbo (架空)</div>
-                        <div class="model-desc">高速・低コスト</div>
+                </div>
+
+                <div class="assistant-card" onclick="showModal('assistant-detail')">
+                    <div class="assistant-name">コード生成アシスタント (架空)</div>
+                    <div class="assistant-desc">プログラミングコードの生成と最適化を行う架空の開発支援AI</div>
+                    <div class="assistant-meta">
+                        <span>作成: 2025/01/10</span>
+                        <span>使用回数: 567</span>
+                        <span>モデル: GPT-4</span>
                     </div>
-                    <div class="model-card">
-                        <div class="model-name">DALL-E 3 (架空)</div>
-                        <div class="model-desc">画像生成モデル</div>
+                </div>
+
+                <div class="assistant-card" onclick="showModal('assistant-detail')">
+                    <div class="assistant-name">翻訳アシスタント (架空)</div>
+                    <div class="assistant-desc">多言語翻訳と文書校正を行う架空の言語処理AI</div>
+                    <div class="assistant-meta">
+                        <span>作成: 2025/01/05</span>
+                        <span>使用回数: 890</span>
+                        <span>モデル: GPT-3.5</span>
                     </div>
-                    <div class="model-card">
-                        <div class="model-name">Whisper (架空)</div>
-                        <div class="model-desc">音声認識モデル</div>
+                </div>
+            </div>
+
+            <!-- API Keys Page -->
+            <div class="page" id="api-keys">
+                <div class="header">
+                    <h1 class="page-title">APIキー管理</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showModal('new-api-key')">
+                            <span>➕</span>
+                            <span>新規キー作成</span>
+                        </button>
                     </div>
+                </div>
+
+                <div class="section">
+                    <div class="api-key-list">
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Production API Key</div>
+                                <div class="api-key-value">sk-proj-...YhK3 (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2025年1月10日 | 最終使用: 2時間前 | 権限: 全て</div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="showModal('edit-api-key')">編集</button>
+                                <button class="btn btn-danger" onclick="confirmDelete('APIキー')">削除</button>
+                            </div>
+                        </div>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Development API Key</div>
+                                <div class="api-key-value">sk-proj-...Xm9a (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2025年1月5日 | 最終使用: 30分前 | 権限: 読み取りのみ</div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="showModal('edit-api-key')">編集</button>
+                                <button class="btn btn-danger" onclick="confirmDelete('APIキー')">削除</button>
+                            </div>
+                        </div>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Testing API Key</div>
+                                <div class="api-key-value">sk-proj-...Kl9m (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2024年12月20日 | 最終使用: 1週間前 | 権限: 制限付き</div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="showModal('edit-api-key')">編集</button>
+                                <button class="btn btn-danger" onclick="confirmDelete('APIキー')">削除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">使用統計</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">総APIコール数</div>
+                            <div class="stat-value">1.2M</div>
+                            <div class="stat-change">全キー合計</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">アクティブキー</div>
+                            <div class="stat-value">3</div>
+                            <div class="stat-change">上限: 10キー</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentation Page -->
+            <div class="page" id="docs">
+                <div class="header">
+                    <h1 class="page-title">ドキュメント</h1>
+                </div>
+
+                <div class="section">
+                    <div class="doc-content">
+                        <div class="doc-section">
+                            <h2 class="doc-title">架空のAPI ドキュメント</h2>
+                            <p class="doc-text">
+                                これは架空のAI APIのドキュメントです。実際のAPIではありませんのでご注意ください。
+                            </p>
+                        </div>
+
+                        <div class="doc-section">
+                            <h3 class="doc-subtitle">クイックスタート</h3>
+                            <p class="doc-text">
+                                架空のAPIを使用するには、まずAPIキーを取得する必要があります。
+                            </p>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode(this)">コピー</button>
+                                <pre>curl https://api.fictional-ai.com/v1/completions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4-turbo",
+    "prompt": "Hello, world!",
+    "max_tokens": 100
+  }'</pre>
+                            </div>
+                        </div>
+
+                        <div class="doc-section">
+                            <h3 class="doc-subtitle">認証</h3>
+                            <p class="doc-text">
+                                すべてのAPIリクエストには、Authorizationヘッダーにベアラートークンとして
+                                APIキーを含める必要があります。
+                            </p>
+                        </div>
+
+                        <div class="doc-section">
+                            <h3 class="doc-subtitle">レート制限</h3>
+                            <p class="doc-text">
+                                架空のAPIには以下のレート制限が適用されます：
+                            </p>
+                            <ul style="color: var(--text-secondary); margin-left: 20px;">
+                                <li>1分あたり60リクエスト</li>
+                                <li>1日あたり10,000リクエスト</li>
+                                <li>1ヶ月あたり1,000,000トークン</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Page -->
+            <div class="page" id="usage">
+                <div class="header">
+                    <h1 class="page-title">使用状況</h1>
+                    <div class="header-actions">
+                        <select class="btn btn-secondary">
+                            <option>過去7日間</option>
+                            <option>過去30日間</option>
+                            <option>過去90日間</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">総使用トークン</div>
+                        <div class="stat-value">28.5M</div>
+                        <div class="stat-change">↑ 先月比 +18%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">APIコール数</div>
+                        <div class="stat-value">452K</div>
+                        <div class="stat-change">↑ 先月比 +25%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">平均レスポンス時間</div>
+                        <div class="stat-value">1.2s</div>
+                        <div class="stat-change">↓ 改善 -0.3s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">エラー率</div>
+                        <div class="stat-value">0.02%</div>
+                        <div class="stat-change">✓ 正常範囲内</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">モデル別使用状況</h2>
+                    <div class="usage-chart">
+                        <div class="usage-bar" style="height: 85%; background: var(--info)"></div>
+                        <div class="usage-bar" style="height: 60%; background: var(--success)"></div>
+                        <div class="usage-bar" style="height: 40%; background: var(--warning)"></div>
+                        <div class="usage-bar" style="height: 20%; background: var(--danger)"></div>
+                    </div>
+                    <div style="display: flex; gap: 20px; margin-top: 16px; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 12px; height: 12px; background: var(--info); border-radius: 2px;"></div>
+                            <span style="font-size: 12px;">GPT-4</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 12px; height: 12px; background: var(--success); border-radius: 2px;"></div>
+                            <span style="font-size: 12px;">GPT-3.5</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 12px; height: 12px; background: var(--warning); border-radius: 2px;"></div>
+                            <span style="font-size: 12px;">DALL-E</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 12px; height: 12px; background: var(--danger); border-radius: 2px;"></div>
+                            <span style="font-size: 12px;">Whisper</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Page -->
+            <div class="page" id="billing">
+                <div class="header">
+                    <h1 class="page-title">料金プラン</h1>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">現在のプラン: Pro (架空)</h2>
+                    <div class="pricing-grid">
+                        <div class="pricing-card">
+                            <div class="pricing-name">Free</div>
+                            <div class="pricing-price">¥0</div>
+                            <div class="pricing-period">月額</div>
+                            <ul class="pricing-features">
+                                <li class="pricing-feature">✓ 5,000トークン/月</li>
+                                <li class="pricing-feature">✓ GPT-3.5アクセス</li>
+                                <li class="pricing-feature">✓ 基本サポート</li>
+                                <li class="pricing-feature">✗ GPT-4アクセス</li>
+                            </ul>
+                            <button class="btn btn-secondary" style="width: 100%;">現在のプラン</button>
+                        </div>
+                        <div class="pricing-card featured">
+                            <div class="pricing-badge">人気</div>
+                            <div class="pricing-name">Pro</div>
+                            <div class="pricing-price">¥2,000</div>
+                            <div class="pricing-period">月額</div>
+                            <ul class="pricing-features">
+                                <li class="pricing-feature">✓ 100万トークン/月</li>
+                                <li class="pricing-feature">✓ 全モデルアクセス</li>
+                                <li class="pricing-feature">✓ 優先サポート</li>
+                                <li class="pricing-feature">✓ APIレート制限緩和</li>
+                            </ul>
+                            <button class="btn btn-primary" style="width: 100%;">選択中</button>
+                        </div>
+                        <div class="pricing-card">
+                            <div class="pricing-name">Enterprise</div>
+                            <div class="pricing-price">お問い合わせ</div>
+                            <div class="pricing-period">カスタム</div>
+                            <ul class="pricing-features">
+                                <li class="pricing-feature">✓ 無制限トークン</li>
+                                <li class="pricing-feature">✓ 専用サポート</li>
+                                <li class="pricing-feature">✓ SLA保証</li>
+                                <li class="pricing-feature">✓ カスタムモデル</li>
+                            </ul>
+                            <button class="btn btn-secondary" style="width: 100%;">お問い合わせ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">請求履歴</h2>
+                    <div class="api-key-list">
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">2025年1月分</div>
+                                <div class="api-key-meta">請求日: 2025年2月1日 | ステータス: 未払い</div>
+                            </div>
+                            <div style="font-weight: 600;">¥2,000</div>
+                        </div>
+                        <div class="api-key-item">
+                            <div class="api-key-info">
+                                <div class="api-key-name">2024年12月分</div>
+                                <div class="api-key-meta">請求日: 2025年1月1日 | ステータス: 支払済み</div>
+                            </div>
+                            <div style="font-weight: 600;">¥2,000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Page -->
+            <div class="page" id="team">
+                <div class="header">
+                    <h1 class="page-title">チーム管理</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showModal('invite-member')">
+                            <span>➕</span>
+                            <span>メンバーを招待</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">チームメンバー</h2>
+                    <div class="team-member">
+                        <div class="team-avatar">TY</div>
+                        <div class="team-info">
+                            <div class="team-name">架空 太郎</div>
+                            <div class="team-role">you@example.com</div>
+                        </div>
+                        <span class="badge badge-admin">管理者</span>
+                    </div>
+                    <div class="team-member">
+                        <div class="team-avatar">HN</div>
+                        <div class="team-info">
+                            <div class="team-name">架空 花子</div>
+                            <div class="team-role">hanako@example.com</div>
+                        </div>
+                        <span class="badge badge-member">メンバー</span>
+                    </div>
+                    <div class="team-member">
+                        <div class="team-avatar">JD</div>
+                        <div class="team-info">
+                            <div class="team-name">架空 次郎</div>
+                            <div class="team-role">jiro@example.com</div>
+                        </div>
+                        <span class="badge badge-member">メンバー</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">招待中</h2>
+                    <div class="empty-state">
+                        <div class="empty-icon">📮</div>
+                        <div class="empty-title">招待中のメンバーはいません</div>
+                        <div class="empty-desc">新しいメンバーを招待して、チームで架空のAIを活用しましょう</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="settings">
+                <div class="header">
+                    <h1 class="page-title">設定</h1>
+                </div>
+
+                <div class="section">
+                    <div class="settings-group">
+                        <h3 class="settings-title">一般設定</h3>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">ダークモード</div>
+                                <div class="settings-desc">UIをダークテーマに切り替えます</div>
+                            </div>
+                            <div class="toggle" onclick="toggleSwitch(this)">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">メール通知</div>
+                                <div class="settings-desc">重要な更新をメールで受け取ります</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleSwitch(this)">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3 class="settings-title">セキュリティ</h3>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">2段階認証</div>
+                                <div class="settings-desc">アカウントのセキュリティを強化します</div>
+                            </div>
+                            <div class="toggle" onclick="toggleSwitch(this)">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <div>
+                                <div class="settings-label">APIキーの自動ローテーション</div>
+                                <div class="settings-desc">30日ごとにAPIキーを自動更新します</div>
+                            </div>
+                            <div class="toggle" onclick="toggleSwitch(this)">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3 class="settings-title">デフォルト設定</h3>
+                        <div class="form-group">
+                            <label class="form-label">デフォルトモデル</label>
+                            <select class="form-input">
+                                <option>GPT-4 Turbo (架空)</option>
+                                <option>GPT-3.5 Turbo (架空)</option>
+                                <option>Claude 3 (架空)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">デフォルトTemperature</label>
+                            <input type="number" class="form-input" value="0.7" min="0" max="2" step="0.1">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary">設定を保存</button>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Modals -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">モーダルタイトル</h2>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div id="modal-content">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Navigation
+        function navigateTo(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageId) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Add click handlers to nav items
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
+                const pageId = item.dataset.page;
+                navigateTo(pageId);
             });
         });
 
+        // Modal functions
+        function showModal(type) {
+            const modal = document.getElementById('modal-overlay');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            switch(type) {
+                case 'new-project':
+                    title.textContent = '新規プロジェクト作成';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">プロジェクト名</label>
+                            <input type="text" class="form-input" placeholder="例: My AI Project">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">説明</label>
+                            <textarea class="form-textarea" placeholder="プロジェクトの説明を入力"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">使用モデル</label>
+                            <select class="form-input">
+                                <option>GPT-4 Turbo (架空)</option>
+                                <option>GPT-3.5 Turbo (架空)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="closeModal()">作成</button>
+                    `;
+                    break;
+                    
+                case 'new-api-key':
+                    title.textContent = '新規APIキー作成';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">キー名</label>
+                            <input type="text" class="form-input" placeholder="例: Production Key">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">権限</label>
+                            <select class="form-input">
+                                <option>全ての権限</option>
+                                <option>読み取りのみ</option>
+                                <option>制限付き</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">有効期限</label>
+                            <select class="form-input">
+                                <option>無期限</option>
+                                <option>30日</option>
+                                <option>90日</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="showNewApiKey()">作成</button>
+                    `;
+                    break;
+                    
+                case 'manage-api-key':
+                    title.textContent = 'APIキー管理';
+                    content.innerHTML = `
+                        <div class="api-key-item" style="border: 1px solid var(--border-color); border-radius: 8px;">
+                            <div class="api-key-info">
+                                <div class="api-key-name">Production API Key</div>
+                                <div class="api-key-value">sk-proj-...YhK3 (架空のキー)</div>
+                                <div class="api-key-meta">作成日: 2025年1月10日</div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label">権限設定</label>
+                            <select class="form-input">
+                                <option>全ての権限</option>
+                                <option>読み取りのみ</option>
+                                <option>制限付き</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="closeModal()">保存</button>
+                            <button class="btn btn-danger" onclick="confirmDelete('APIキー')">削除</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'user-profile':
+                    title.textContent = 'ユーザープロフィール';
+                    content.innerHTML = `
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 12px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 32px; font-weight: 600;">TY</div>
+                            <h3>架空 太郎</h3>
+                            <p style="color: var(--text-secondary);">you@example.com</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">表示名</label>
+                            <input type="text" class="form-input" value="架空 太郎">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">メールアドレス</label>
+                            <input type="email" class="form-input" value="you@example.com">
+                        </div>
+                        <button class="btn btn-primary" onclick="closeModal()">更新</button>
+                        <button class="btn btn-secondary" onclick="alert('架空のログアウト機能です')">ログアウト</button>
+                    `;
+                    break;
+                    
+                case 'new-assistant':
+                    title.textContent = '新規アシスタント作成';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">アシスタント名</label>
+                            <input type="text" class="form-input" placeholder="例: カスタマーサポートBot">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">説明</label>
+                            <textarea class="form-textarea" placeholder="アシスタントの役割を説明"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ベースモデル</label>
+                            <select class="form-input">
+                                <option>GPT-4 Turbo (架空)</option>
+                                <option>GPT-3.5 Turbo (架空)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">システムプロンプト</label>
+                            <textarea class="form-textarea" placeholder="アシスタントの振る舞いを定義"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="closeModal()">作成</button>
+                    `;
+                    break;
+                    
+                case 'assistant-detail':
+                    title.textContent = 'アシスタント詳細';
+                    content.innerHTML = `
+                        <div class="assistant-card" style="cursor: default; margin-bottom: 20px;">
+                            <div class="assistant-name">カスタマーサポートBot (架空)</div>
+                            <div class="assistant-desc">お客様からの問い合わせに24時間365日対応する架空のAIアシスタント</div>
+                            <div class="assistant-meta">
+                                <span>作成: 2025/01/15</span>
+                                <span>使用回数: 1,234</span>
+                                <span>モデル: GPT-4</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">テストメッセージ</label>
+                            <textarea class="form-textarea" placeholder="アシスタントに送るメッセージを入力"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="alert('架空のテスト実行です')">テスト実行</button>
+                            <button class="btn btn-secondary" onclick="closeModal()">編集</button>
+                            <button class="btn btn-danger" onclick="confirmDelete('アシスタント')">削除</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'invite-member':
+                    title.textContent = 'メンバーを招待';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">メールアドレス</label>
+                            <input type="email" class="form-input" placeholder="member@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">役割</label>
+                            <select class="form-input">
+                                <option>メンバー</option>
+                                <option>管理者</option>
+                                <option>閲覧者</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">メッセージ（任意）</label>
+                            <textarea class="form-textarea" placeholder="招待メッセージを入力"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="alert('架空の招待を送信しました'); closeModal();">招待を送信</button>
+                    `;
+                    break;
+                    
+                case 'edit-api-key':
+                    title.textContent = 'APIキー編集';
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">キー名</label>
+                            <input type="text" class="form-input" value="Production API Key">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">権限</label>
+                            <select class="form-input">
+                                <option selected>全ての権限</option>
+                                <option>読み取りのみ</option>
+                                <option>制限付き</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">IPホワイトリスト（任意）</label>
+                            <textarea class="form-textarea" placeholder="許可するIPアドレスを改行区切りで入力"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="closeModal()">保存</button>
+                    `;
+                    break;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        function showNewApiKey() {
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">新しいAPIキーが作成されました（架空）：</p>
+                    <code style="font-family: monospace; font-size: 14px; word-break: break-all;">sk-proj-abcdef123456789ABCDEF123456789abcdef123456789</code>
+                </div>
+                <p style="color: var(--warning); font-size: 14px; margin-bottom: 20px;">
+                    ⚠️ このキーは二度と表示されません。安全な場所に保管してください。
+                </p>
+                <button class="btn btn-primary" onclick="closeModal()">完了</button>
+            `;
+        }
+
+        function confirmDelete(item) {
+            if (confirm(`この${item}を削除してもよろしいですか？（架空の操作）`)) {
+                alert(`${item}が削除されました（架空の操作）`);
+                closeModal();
+            }
+        }
+
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            const label = element.parentElement.querySelector('.settings-label').textContent;
+            const state = element.classList.contains('active') ? 'ON' : 'OFF';
+            console.log(`架空の設定: ${label} を ${state} に変更`);
+        }
+
+        function generateResponse() {
+            const input = document.getElementById('playground-input').value;
+            const output = document.getElementById('playground-output');
+            
+            if (!input) {
+                alert('プロンプトを入力してください');
+                return;
+            }
+            
+            output.innerHTML = '<div style="color: var(--text-muted);">生成中...</div>';
+            
+            setTimeout(() => {
+                const responses = [
+                    'これは架空のAIレスポンスです。実際のAI APIは接続されていません。',
+                    'ユーザーの入力に基づいた架空の応答を表示しています。',
+                    'プレイグラウンドは実際のAIモデルには接続されていないデモ環境です。',
+                    '架空のAIアシスタントからの返信: お手伝いできることがあれば教えてください。'
+                ];
+                
+                output.innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <strong>入力:</strong><br>
+                        <div style="padding: 8px; background: var(--bg-primary); border-radius: 4px; margin-top: 4px;">
+                            ${input}
+                        </div>
+                    </div>
+                    <div>
+                        <strong>架空のAI応答:</strong><br>
+                        <div style="padding: 8px; background: var(--bg-primary); border-radius: 4px; margin-top: 4px;">
+                            ${responses[Math.floor(Math.random() * responses.length)]}<br><br>
+                            入力されたプロンプト「${input.substring(0, 50)}${input.length > 50 ? '...' : ''}」に対する架空の応答です。
+                        </div>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.parentElement.querySelector('pre').textContent;
+            navigator.clipboard.writeText(codeBlock).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'コピー済み!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Model card selection
         document.querySelectorAll('.model-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
@@ -550,14 +1785,11 @@
             });
         });
 
-        document.querySelector('.user-menu').addEventListener('click', () => {
-            alert('架空のユーザーメニューです');
-        });
-
-        document.querySelectorAll('.btn-primary').forEach(btn => {
-            btn.addEventListener('click', () => {
-                alert('架空の機能です - 実際には動作しません');
-            });
+        // Close modal when clicking overlay
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal-overlay')) {
+                closeModal();
+            }
         });
     </script>
 </body>
