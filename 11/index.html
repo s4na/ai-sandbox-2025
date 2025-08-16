@@ -540,6 +540,7 @@
                 e.preventDefault();
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
+                alert(`架空のナビゲーション: ${item.querySelector('span:last-child').textContent}へ移動`);
             });
         });
 
@@ -547,6 +548,8 @@
             card.addEventListener('click', () => {
                 document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
+                const modelName = card.querySelector('.model-name').textContent;
+                alert(`架空のモデル選択: ${modelName}を選択しました`);
             });
         });
 
@@ -555,10 +558,34 @@
         });
 
         document.querySelectorAll('.btn-primary').forEach(btn => {
-            btn.addEventListener('click', () => {
-                alert('架空の機能です - 実際には動作しません');
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const btnText = btn.textContent.trim();
+                alert(`架空の機能: ${btnText} - 実際には動作しません`);
             });
         });
+
+        document.querySelectorAll('.btn-secondary').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const btnText = btn.textContent.trim();
+                
+                if (btn.tagName === 'SELECT') {
+                    const selectedOption = btn.options[btn.selectedIndex].text;
+                    alert(`架空の表示切替: ${selectedOption}を選択しました`);
+                } else {
+                    alert(`架空の機能: ${btnText} - 実際には動作しません`);
+                }
+            });
+        });
+
+        const selectElement = document.querySelector('select.btn.btn-secondary');
+        if (selectElement) {
+            selectElement.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex].text;
+                alert(`架空のグラフ表示: ${selectedOption}に切り替えました`);
+            });
+        }
     </script>
 </body>
 </html>
