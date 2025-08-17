@@ -1,0 +1,25 @@
+{
+  "name": "ai-sandbox-2025",
+  "version": "1.0.0",
+  "description": "AIを用いて架空のサイトを作るrepo このプロジェクトのデータは全て架空のものです。",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/s4na/ai-sandbox-2025.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/s4na/ai-sandbox-2025/issues"
+  },
+  "homepage": "https://github.com/s4na/ai-sandbox-2025#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}
