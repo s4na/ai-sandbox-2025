@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空のPNG to JPEG変換ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone:hover {
+            background-color: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        .drop-zone.dragover {
+            background-color: #e8ecff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone-text {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-subtext {
+            color: #999;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .preview-container.active {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .file-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .file-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .quality-control {
+            margin-bottom: 20px;
+        }
+
+        .quality-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .quality-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .quality-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .quality-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .quality-value {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .button-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .drop-zone {
+                padding: 40px 15px;
+            }
+
+            .drop-zone-icon {
+                font-size: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PNG → JPEG 変換ツール</h1>
+        <p class="subtitle">※ これは架空のツールです</p>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📸</div>
+            <div class="drop-zone-text">PNGファイルをドラッグ&ドロップ</div>
+            <div class="drop-zone-subtext">またはクリックしてファイルを選択</div>
+            <input type="file" id="fileInput" accept=".png,image/png">
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+            <img class="preview-image" id="previewImage" alt="プレビュー">
+            
+            <div class="file-info" id="fileInfo">
+                <div class="file-info-row">
+                    <span class="file-info-label">ファイル名:</span>
+                    <span class="file-info-value" id="fileName">-</span>
+                </div>
+                <div class="file-info-row">
+                    <span class="file-info-label">元のサイズ:</span>
+                    <span class="file-info-value" id="originalSize">-</span>
+                </div>
+                <div class="file-info-row">
+                    <span class="file-info-label">推定JPEG サイズ:</span>
+                    <span class="file-info-value" id="estimatedSize">-</span>
+                </div>
+            </div>
+
+            <div class="quality-control">
+                <label class="quality-label" for="qualitySlider">JPEG品質:</label>
+                <input type="range" class="quality-slider" id="qualitySlider" min="10" max="100" value="85">
+                <div class="quality-value" id="qualityValue">85%</div>
+            </div>
+
+            <div class="button-group">
+                <button class="button button-secondary" id="resetButton">リセット</button>
+                <button class="button button-primary" id="downloadButton">JPEGでダウンロード</button>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const originalSize = document.getElementById('originalSize');
+        const estimatedSize = document.getElementById('estimatedSize');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const downloadButton = document.getElementById('downloadButton');
+        const resetButton = document.getElementById('resetButton');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let currentFile = null;
+        let currentCanvas = null;
+
+        // ドラッグ&ドロップイベント
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 品質スライダー
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.textContent = `${e.target.value}%`;
+            if (currentCanvas) {
+                updateEstimatedSize();
+            }
+        });
+
+        // ボタンイベント
+        downloadButton.addEventListener('click', downloadJPEG);
+        resetButton.addEventListener('click', reset);
+
+        function handleFile(file) {
+            // PNGファイルかチェック
+            if (!file.type.includes('png')) {
+                showError('PNGファイルを選択してください');
+                return;
+            }
+
+            currentFile = file;
+            fileName.textContent = file.name;
+            originalSize.textContent = formatFileSize(file.size);
+
+            // 画像を読み込み
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Canvasに描画
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    currentCanvas = canvas;
+
+                    // プレビュー表示
+                    previewImage.src = e.target.result;
+                    previewContainer.classList.add('active');
+                    errorMessage.classList.remove('active');
+
+                    // 推定サイズを更新
+                    updateEstimatedSize();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateEstimatedSize() {
+            if (!currentCanvas) return;
+
+            const quality = qualitySlider.value / 100;
+            currentCanvas.toBlob((blob) => {
+                if (blob) {
+                    estimatedSize.textContent = formatFileSize(blob.size);
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        function downloadJPEG() {
+            if (!currentCanvas || !currentFile) return;
+
+            const quality = qualitySlider.value / 100;
+            currentCanvas.toBlob((blob) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = currentFile.name.replace('.png', '.jpg');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        function reset() {
+            currentFile = null;
+            currentCanvas = null;
+            fileInput.value = '';
+            previewContainer.classList.remove('active');
+            errorMessage.classList.remove('active');
+            qualitySlider.value = 85;
+            qualityValue.textContent = '85%';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
