@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>架空の画像トリミングツール - 10MB最適化ビューワー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            margin-bottom: 30px;
+        }
+        
+        .drop-zone.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone.hidden {
+            display: none;
+        }
+        
+        .drop-icon {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .drop-text {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .drop-subtext {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .editor-container {
+            display: none;
+            position: relative;
+        }
+        
+        .editor-container.active {
+            display: block;
+        }
+        
+        .toolbar {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .canvas-container {
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        
+        #canvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            cursor: crosshair;
+            background: white;
+        }
+        
+        .size-display {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .size-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .size-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .size-label {
+            color: #aaa;
+            font-size: 12px;
+        }
+        
+        .size-value {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .size-progress {
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .size-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            transition: width 0.3s ease;
+        }
+        
+        .crop-overlay {
+            position: absolute;
+            border: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            pointer-events: none;
+        }
+        
+        .crop-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+        }
+        
+        .crop-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .crop-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .crop-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .crop-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group label {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .input-group input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100px;
+        }
+        
+        .quality-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .quality-slider input[type="range"] {
+            flex: 1;
+        }
+        
+        .quality-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ 架空の画像トリミングツール</h1>
+        <p class="subtitle">10MB最適化ビューワー - ドラッグ&ドロップで簡単トリミング</p>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">📸</div>
+            <div class="drop-text">画像をドラッグ&ドロップ</div>
+            <div class="drop-subtext">または クリックしてファイルを選択</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div class="editor-container" id="editorContainer">
+            <div class="toolbar">
+                <button class="btn btn-primary" id="cropFreeBtn">自由サイズでトリミング</button>
+                <button class="btn btn-warning" id="crop10MBBtn">10MBちょうどにトリミング</button>
+                <button class="btn btn-success" id="downloadBtn">ダウンロード</button>
+                <button class="btn btn-secondary" id="resetBtn">リセット</button>
+                <button class="btn btn-secondary" id="newImageBtn">別の画像を選択</button>
+                
+                <div class="quality-slider">
+                    <label>品質:</label>
+                    <input type="range" id="qualitySlider" min="10" max="100" value="85">
+                    <span class="quality-value" id="qualityValue">85</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>幅:</label>
+                    <input type="number" id="widthInput" min="1">
+                    <label>高さ:</label>
+                    <input type="number" id="heightInput" min="1">
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+                <div class="crop-overlay" id="cropOverlay" style="display: none;">
+                    <div class="crop-handle nw"></div>
+                    <div class="crop-handle ne"></div>
+                    <div class="crop-handle sw"></div>
+                    <div class="crop-handle se"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="size-display" id="sizeDisplay" style="display: none;">
+        <div class="size-info">
+            <div class="size-row">
+                <span class="size-label">現在のサイズ:</span>
+                <span class="size-value" id="currentSize">0 MB</span>
+            </div>
+            <div class="size-row">
+                <span class="size-label">目標:</span>
+                <span style="color: #28a745;">10 MB</span>
+            </div>
+            <div class="size-row">
+                <span class="size-label">解像度:</span>
+                <span id="resolution">0 x 0</span>
+            </div>
+            <div class="size-progress">
+                <div class="size-progress-bar" id="sizeProgressBar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class ImageTrimmer {
+            constructor() {
+                this.originalImage = null;
+                this.currentImage = null;
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.cropArea = null;
+                this.isDragging = false;
+                this.dragStart = null;
+                this.quality = 0.85;
+                
+                this.initEventListeners();
+            }
+            
+            initEventListeners() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('fileInput');
+                
+                // ドラッグ&ドロップ
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+                
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('dragover');
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type.startsWith('image/')) {
+                        this.loadImage(files[0]);
+                    }
+                });
+                
+                dropZone.addEventListener('click', () => {
+                    fileInput.click();
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.loadImage(e.target.files[0]);
+                    }
+                });
+                
+                // ボタンイベント
+                document.getElementById('cropFreeBtn').addEventListener('click', () => {
+                    this.startFreeCrop();
+                });
+                
+                document.getElementById('crop10MBBtn').addEventListener('click', () => {
+                    this.cropTo10MB();
+                });
+                
+                document.getElementById('downloadBtn').addEventListener('click', () => {
+                    this.downloadImage();
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.resetImage();
+                });
+                
+                document.getElementById('newImageBtn').addEventListener('click', () => {
+                    this.selectNewImage();
+                });
+                
+                // 品質スライダー
+                const qualitySlider = document.getElementById('qualitySlider');
+                qualitySlider.addEventListener('input', (e) => {
+                    this.quality = e.target.value / 100;
+                    document.getElementById('qualityValue').textContent = e.target.value;
+                    this.updateSizeDisplay();
+                });
+                
+                // サイズ入力
+                document.getElementById('widthInput').addEventListener('input', () => {
+                    this.resizeCanvas();
+                });
+                
+                document.getElementById('heightInput').addEventListener('input', () => {
+                    this.resizeCanvas();
+                });
+                
+                // キャンバスマウスイベント
+                this.canvas.addEventListener('mousedown', (e) => this.startCrop(e));
+                this.canvas.addEventListener('mousemove', (e) => this.updateCrop(e));
+                this.canvas.addEventListener('mouseup', () => this.endCrop());
+                this.canvas.addEventListener('mouseleave', () => this.endCrop());
+            }
+            
+            loadImage(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.currentImage = img;
+                        this.displayImage(img);
+                        this.showEditor();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            displayImage(img) {
+                const maxWidth = 800;
+                const maxHeight = 600;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+                
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.ctx.drawImage(img, 0, 0, width, height);
+                
+                document.getElementById('widthInput').value = Math.round(width);
+                document.getElementById('heightInput').value = Math.round(height);
+                
+                this.updateSizeDisplay();
+            }
+            
+            showEditor() {
+                document.getElementById('dropZone').classList.add('hidden');
+                document.getElementById('editorContainer').classList.add('active');
+                document.getElementById('sizeDisplay').style.display = 'block';
+            }
+            
+            hideEditor() {
+                document.getElementById('dropZone').classList.remove('hidden');
+                document.getElementById('editorContainer').classList.remove('active');
+                document.getElementById('sizeDisplay').style.display = 'none';
+            }
+            
+            startFreeCrop() {
+                this.cropArea = null;
+                document.getElementById('cropOverlay').style.display = 'none';
+                this.canvas.style.cursor = 'crosshair';
+            }
+            
+            startCrop(e) {
+                if (!this.currentImage) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                this.isDragging = true;
+                this.dragStart = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+                
+                const overlay = document.getElementById('cropOverlay');
+                overlay.style.display = 'block';
+                overlay.style.left = this.dragStart.x + 'px';
+                overlay.style.top = this.dragStart.y + 'px';
+                overlay.style.width = '0px';
+                overlay.style.height = '0px';
+            }
+            
+            updateCrop(e) {
+                if (!this.isDragging || !this.dragStart) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                
+                const width = Math.abs(currentX - this.dragStart.x);
+                const height = Math.abs(currentY - this.dragStart.y);
+                const left = Math.min(currentX, this.dragStart.x);
+                const top = Math.min(currentY, this.dragStart.y);
+                
+                const overlay = document.getElementById('cropOverlay');
+                overlay.style.left = left + 'px';
+                overlay.style.top = top + 'px';
+                overlay.style.width = width + 'px';
+                overlay.style.height = height + 'px';
+                
+                this.cropArea = { left, top, width, height };
+                this.updateCropSizeDisplay();
+            }
+            
+            endCrop() {
+                this.isDragging = false;
+                if (this.cropArea && this.cropArea.width > 10 && this.cropArea.height > 10) {
+                    this.applyCrop();
+                }
+            }
+            
+            applyCrop() {
+                if (!this.cropArea) return;
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                tempCanvas.width = this.cropArea.width * scaleX;
+                tempCanvas.height = this.cropArea.height * scaleY;
+                
+                tempCtx.drawImage(
+                    this.currentImage,
+                    this.cropArea.left * scaleX,
+                    this.cropArea.top * scaleY,
+                    this.cropArea.width * scaleX,
+                    this.cropArea.height * scaleY,
+                    0, 0,
+                    tempCanvas.width,
+                    tempCanvas.height
+                );
+                
+                const img = new Image();
+                img.onload = () => {
+                    this.currentImage = img;
+                    this.displayImage(img);
+                    document.getElementById('cropOverlay').style.display = 'none';
+                    this.cropArea = null;
+                };
+                img.src = tempCanvas.toDataURL('image/jpeg', this.quality);
+            }
+            
+            async cropTo10MB() {
+                const targetSize = 10 * 1024 * 1024; // 10MB in bytes
+                let scale = 1;
+                let quality = this.quality;
+                let attempts = 0;
+                const maxAttempts = 20;
+                
+                while (attempts < maxAttempts) {
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    tempCanvas.width = this.currentImage.width * scale;
+                    tempCanvas.height = this.currentImage.height * scale;
+                    
+                    tempCtx.drawImage(this.currentImage, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    const base64 = dataUrl.split(',')[1];
+                    const estimatedSize = base64.length * 0.75;
+                    
+                    if (Math.abs(estimatedSize - targetSize) < targetSize * 0.05) {
+                        // 5%以内の誤差なら完了
+                        const img = new Image();
+                        img.onload = () => {
+                            this.currentImage = img;
+                            this.displayImage(img);
+                            alert('画像を約10MBにトリミングしました！');
+                        };
+                        img.src = dataUrl;
+                        break;
+                    }
+                    
+                    if (estimatedSize > targetSize) {
+                        scale *= 0.9;
+                        if (scale < 0.1) {
+                            quality *= 0.9;
+                            scale = 0.1;
+                        }
+                    } else {
+                        scale *= 1.05;
+                        if (scale > 1) {
+                            scale = 1;
+                            quality = Math.min(quality * 1.1, 1);
+                        }
+                    }
+                    
+                    attempts++;
+                }
+            }
+            
+            resizeCanvas() {
+                const width = parseInt(document.getElementById('widthInput').value) || 100;
+                const height = parseInt(document.getElementById('heightInput').value) || 100;
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                tempCtx.drawImage(this.currentImage, 0, 0, width, height);
+                
+                const img = new Image();
+                img.onload = () => {
+                    this.currentImage = img;
+                    this.displayImage(img);
+                };
+                img.src = tempCanvas.toDataURL('image/jpeg', this.quality);
+            }
+            
+            updateSizeDisplay() {
+                if (!this.currentImage) return;
+                
+                this.canvas.toBlob((blob) => {
+                    const sizeInMB = (blob.size / (1024 * 1024)).toFixed(2);
+                    document.getElementById('currentSize').textContent = `${sizeInMB} MB`;
+                    
+                    const percentage = Math.min((blob.size / (10 * 1024 * 1024)) * 100, 100);
+                    document.getElementById('sizeProgressBar').style.width = `${percentage}%`;
+                    
+                    document.getElementById('resolution').textContent = 
+                        `${this.canvas.width} x ${this.canvas.height}`;
+                }, 'image/jpeg', this.quality);
+            }
+            
+            updateCropSizeDisplay() {
+                if (!this.cropArea) return;
+                
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                const actualWidth = Math.round(this.cropArea.width * scaleX);
+                const actualHeight = Math.round(this.cropArea.height * scaleY);
+                
+                document.getElementById('resolution').textContent = 
+                    `${actualWidth} x ${actualHeight} (選択中)`;
+            }
+            
+            downloadImage() {
+                this.canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `trimmed_image_${Date.now()}.jpg`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }, 'image/jpeg', this.quality);
+            }
+            
+            resetImage() {
+                if (this.originalImage) {
+                    this.currentImage = this.originalImage;
+                    this.displayImage(this.originalImage);
+                    document.getElementById('cropOverlay').style.display = 'none';
+                    this.cropArea = null;
+                }
+            }
+            
+            selectNewImage() {
+                this.hideEditor();
+                this.originalImage = null;
+                this.currentImage = null;
+                this.cropArea = null;
+                document.getElementById('fileInput').value = '';
+            }
+        }
+        
+        // アプリケーション初期化
+        const trimmer = new ImageTrimmer();
+    </script>
+</body>
+</html>
