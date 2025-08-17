@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ダウンロードサイズテスト</title>
+</head>
+<body>
+    <h1>ダウンロードサイズテスト</h1>
+    <canvas id="testCanvas" width="1000" height="1000"></canvas>
+    <br>
+    <button id="downloadBtn">ダウンロード</button>
+    <div id="sizeInfo"></div>
+
+    <script>
+        // テスト画像を作成
+        const canvas = document.getElementById('testCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // グラデーションで複雑な画像を作成
+        const gradient = ctx.createLinearGradient(0, 0, 1000, 1000);
+        gradient.addColorStop(0, 'red');
+        gradient.addColorStop(0.5, 'green');
+        gradient.addColorStop(1, 'blue');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1000, 1000);
+        
+        // ランダムな円を追加して複雑さを増す
+        for (let i = 0; i < 100; i++) {
+            ctx.beginPath();
+            ctx.arc(
+                Math.random() * 1000,
+                Math.random() * 1000,
+                Math.random() * 50,
+                0,
+                Math.PI * 2
+            );
+            ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`;
+            ctx.fill();
+        }
+        
+        // 品質別でサイズをテスト
+        const qualities = [0.1, 0.3, 0.5, 0.7, 0.85, 0.95, 1.0];
+        const results = [];
+        
+        qualities.forEach(quality => {
+            canvas.toBlob((blob) => {
+                const sizeInBytes = blob.size;
+                const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+                const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+                
+                results.push({
+                    quality: quality,
+                    bytes: sizeInBytes,
+                    kb: sizeInKB,
+                    mb: sizeInMB
+                });
+                
+                if (results.length === qualities.length) {
+                    displayResults();
+                }
+            }, 'image/jpeg', quality);
+        });
+        
+        function displayResults() {
+            const infoDiv = document.getElementById('sizeInfo');
+            let html = '<h2>品質別ファイルサイズ (1000x1000px)</h2>';
+            html += '<table border="1"><tr><th>品質</th><th>バイト</th><th>KB</th><th>MB</th></tr>';
+            
+            results.sort((a, b) => a.quality - b.quality);
+            results.forEach(r => {
+                html += `<tr>
+                    <td>${(r.quality * 100).toFixed(0)}%</td>
+                    <td>${r.bytes.toLocaleString()}</td>
+                    <td>${r.kb} KB</td>
+                    <td>${r.mb} MB</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            infoDiv.innerHTML = html;
+        }
+        
+        // ダウンロードボタン
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'test_image.jpg';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                alert(`ダウンロードサイズ: ${(blob.size / 1024).toFixed(2)} KB`);
+            }, 'image/jpeg', 0.85);
+        });
+    </script>
+</body>
+</html>
