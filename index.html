@@ -235,7 +235,9 @@
                 pageListEl.style.display = 'none';
                 noPageEl.style.display = 'block';
             } else {
-                pageListEl.innerHTML = pages.map(createPageCard).join('');
+                // 逆順にして表示
+                const reversedPages = [...pages].reverse();
+                pageListEl.innerHTML = reversedPages.map(createPageCard).join('');
                 pageListEl.style.display = 'grid';
                 noPageEl.style.display = 'none';
                 
