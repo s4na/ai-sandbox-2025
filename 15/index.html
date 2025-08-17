@@ -526,26 +526,32 @@
             }
             
             displayImage(img) {
+                console.log(`displayImage called - Original size: ${img.width}x${img.height}`);
+                
                 const maxWidth = 800;
                 const maxHeight = 600;
-                let width = img.width;
-                let height = img.height;
+                let displayWidth = img.width;
+                let displayHeight = img.height;
                 
-                if (width > maxWidth) {
-                    height = (maxWidth / width) * height;
-                    width = maxWidth;
+                // 表示用のサイズを計算（キャンバスは表示用）
+                if (displayWidth > maxWidth) {
+                    displayHeight = (maxWidth / displayWidth) * displayHeight;
+                    displayWidth = maxWidth;
                 }
-                if (height > maxHeight) {
-                    width = (maxHeight / height) * width;
-                    height = maxHeight;
+                if (displayHeight > maxHeight) {
+                    displayWidth = (maxHeight / displayHeight) * displayWidth;
+                    displayHeight = maxHeight;
                 }
                 
-                this.canvas.width = width;
-                this.canvas.height = height;
-                this.ctx.drawImage(img, 0, 0, width, height);
+                console.log(`Canvas display size: ${displayWidth}x${displayHeight}`);
                 
-                document.getElementById('widthInput').value = Math.round(width);
-                document.getElementById('heightInput').value = Math.round(height);
+                this.canvas.width = displayWidth;
+                this.canvas.height = displayHeight;
+                this.ctx.drawImage(img, 0, 0, displayWidth, displayHeight);
+                
+                // 入力フィールドには実際の画像サイズを表示
+                document.getElementById('widthInput').value = Math.round(img.width);
+                document.getElementById('heightInput').value = Math.round(img.height);
                 
                 this.updateSizeDisplay();
             }
@@ -910,6 +916,8 @@
                 const width = parseInt(document.getElementById('widthInput').value) || 100;
                 const height = parseInt(document.getElementById('heightInput').value) || 100;
                 
+                console.log(`Resizing image to: ${width}x${height}`);
+                
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
@@ -917,26 +925,78 @@
                 tempCanvas.height = height;
                 tempCtx.drawImage(this.currentImage, 0, 0, width, height);
                 
-                const img = new Image();
-                img.onload = () => {
-                    this.currentImage = img;
-                    this.displayImage(img);
-                };
-                img.src = tempCanvas.toDataURL('image/jpeg', this.quality);
+                // 新しいImageオブジェクトを作成してサイズを正しく設定
+                tempCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.displayImage(img);
+                        URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                }, 'image/jpeg', this.quality);
             }
             
             updateSizeDisplay() {
                 if (!this.currentImage) return;
                 
-                this.canvas.toBlob((blob) => {
-                    const sizeInMB = (blob.size / (1024 * 1024)).toFixed(2);
-                    document.getElementById('currentSize').textContent = `${sizeInMB} MB`;
+                // デバッグログ
+                console.log('updateSizeDisplay called');
+                console.log(`Canvas size: ${this.canvas.width}x${this.canvas.height}`);
+                console.log(`Image size: ${this.currentImage.width}x${this.currentImage.height}`);
+                console.log(`Quality: ${this.quality}`);
+                
+                // 実際の画像サイズでBlobを作成
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // 元画像のサイズを使用
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
+                tempCtx.drawImage(this.currentImage, 0, 0);
+                
+                tempCanvas.toBlob((blob) => {
+                    if (!blob) {
+                        console.error('Blob creation failed');
+                        return;
+                    }
                     
-                    const percentage = Math.min((blob.size / (10 * 1024 * 1024)) * 100, 100);
+                    const sizeInBytes = blob.size;
+                    const sizeInKB = sizeInBytes / 1024;
+                    const sizeInMB = sizeInKB / 1024;
+                    
+                    console.log(`Blob size: ${sizeInBytes} bytes = ${sizeInKB.toFixed(2)} KB = ${sizeInMB.toFixed(2)} MB`);
+                    
+                    // サイズ表示を更新
+                    let sizeText;
+                    if (sizeInMB >= 1) {
+                        sizeText = `${sizeInMB.toFixed(2)} MB`;
+                    } else if (sizeInKB >= 1) {
+                        sizeText = `${sizeInKB.toFixed(2)} KB`;
+                    } else {
+                        sizeText = `${sizeInBytes} bytes`;
+                    }
+                    
+                    document.getElementById('currentSize').textContent = sizeText;
+                    
+                    // プログレスバーの更新（10MBを基準）
+                    const percentage = Math.min((sizeInBytes / (10 * 1024 * 1024)) * 100, 100);
                     document.getElementById('sizeProgressBar').style.width = `${percentage}%`;
                     
+                    // プログレスバーの色を更新
+                    const progressBar = document.getElementById('sizeProgressBar');
+                    if (sizeInMB > 10.5) {
+                        progressBar.style.background = '#dc3545'; // 赤
+                    } else if (sizeInMB > 9.5 && sizeInMB <= 10.5) {
+                        progressBar.style.background = '#28a745'; // 緑
+                    } else {
+                        progressBar.style.background = '#ffc107'; // 黄
+                    }
+                    
+                    // 解像度表示（実際の画像サイズ）
                     document.getElementById('resolution').textContent = 
-                        `${this.canvas.width} x ${this.canvas.height}`;
+                        `${this.currentImage.width} x ${this.currentImage.height}`;
                 }, 'image/jpeg', this.quality);
             }
             
