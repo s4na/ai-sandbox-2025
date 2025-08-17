@@ -1181,42 +1181,82 @@
             confirmSmartCrop() {
                 if (!this.smartCropArea) return;
                 
-                console.log(`スマートクロップ実行: ${this.smartCropArea.actualWidth}x${this.smartCropArea.actualHeight}`);
+                console.log(`===== スマートクロップ実行 =====`);
+                console.log(`目標サイズ: ${this.smartCropArea.actualWidth}x${this.smartCropArea.actualHeight}`);
+                console.log(`推定サイズ: ${(this.smartCropArea.estimatedSize / (1024 * 1024)).toFixed(2)}MB`);
                 
                 // 元画像を保存
                 this.beforeCropImage = this.currentImage;
                 
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                
+                // 拡大が必要な場合は元画像を拡大
                 const scaleX = this.currentImage.width / this.canvas.width;
                 const scaleY = this.currentImage.height / this.canvas.height;
+                
+                // 実際のトリミング領域を計算
+                const cropLeft = this.smartCropArea.left * scaleX;
+                const cropTop = this.smartCropArea.top * scaleY;
+                const cropWidth = this.smartCropArea.width * scaleX;
+                const cropHeight = this.smartCropArea.height * scaleY;
+                
+                console.log(`トリミング領域: left=${cropLeft}, top=${cropTop}, width=${cropWidth}, height=${cropHeight}`);
+                console.log(`元画像サイズ: ${this.currentImage.width}x${this.currentImage.height}`);
+                
+                // 目標サイズのキャンバスを作成
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
                 
                 tempCanvas.width = this.smartCropArea.actualWidth;
                 tempCanvas.height = this.smartCropArea.actualHeight;
                 
-                tempCtx.drawImage(
-                    this.currentImage,
-                    this.smartCropArea.left * scaleX,
-                    this.smartCropArea.top * scaleY,
-                    this.smartCropArea.width * scaleX,
-                    this.smartCropArea.height * scaleY,
-                    0, 0,
-                    tempCanvas.width,
-                    tempCanvas.height
-                );
+                console.log(`出力キャンバスサイズ: ${tempCanvas.width}x${tempCanvas.height}`);
                 
-                const img = new Image();
-                img.onload = () => {
-                    this.currentImage = img;
-                    this.displayImage(img);
-                    this.exit10MBMode();
-                    this.showComparisonButton();
+                // 画像がトリミング範囲より小さい場合は拡大して描画
+                if (this.smartCropArea.actualWidth > cropWidth || this.smartCropArea.actualHeight > cropHeight) {
+                    console.log('画像の拡大が必要です');
+                    // 全体を拡大して描画
+                    tempCtx.drawImage(
+                        this.currentImage,
+                        0, 0,
+                        this.currentImage.width,
+                        this.currentImage.height,
+                        0, 0,
+                        tempCanvas.width,
+                        tempCanvas.height
+                    );
+                } else {
+                    console.log('通常のトリミング処理');
+                    // トリミング範囲を切り出して描画
+                    tempCtx.drawImage(
+                        this.currentImage,
+                        cropLeft, cropTop,
+                        cropWidth, cropHeight,
+                        0, 0,
+                        tempCanvas.width,
+                        tempCanvas.height
+                    );
+                }
+                
+                // Blobを作成して実際のサイズを確認
+                tempCanvas.toBlob((blob) => {
+                    const actualSize = blob.size;
+                    const actualSizeMB = (actualSize / (1024 * 1024)).toFixed(2);
+                    console.log(`実際のファイルサイズ: ${actualSizeMB}MB (${actualSize} bytes)`);
                     
-                    const sizeInMB = (this.smartCropArea.estimatedSize / (1024 * 1024)).toFixed(2);
-                    alert(`画像を約${sizeInMB}MBにトリミングしました！`);
-                };
-                img.src = tempCanvas.toDataURL('image/jpeg', this.quality);
+                    // Blobから画像を作成
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.displayImage(img);
+                        this.exit10MBMode();
+                        this.showComparisonButton();
+                        URL.revokeObjectURL(url);
+                        
+                        alert(`画像を${actualSizeMB}MBにトリミングしました！\n(サイズ: ${tempCanvas.width}x${tempCanvas.height})`);
+                        console.log('===== スマートクロップ完了 =====');
+                    };
+                    img.src = url;
+                }, 'image/jpeg', this.quality);
             }
             
             exit10MBMode() {
@@ -1495,13 +1535,32 @@
             }
             
             downloadImage() {
-                this.canvas.toBlob((blob) => {
+                console.log('===== ダウンロード処理開始 =====');
+                console.log(`現在の画像サイズ: ${this.currentImage.width}x${this.currentImage.height}`);
+                console.log(`キャンバス表示サイズ: ${this.canvas.width}x${this.canvas.height}`);
+                
+                // 実際の画像サイズでダウンロード用キャンバスを作成
+                const downloadCanvas = document.createElement('canvas');
+                const downloadCtx = downloadCanvas.getContext('2d');
+                
+                downloadCanvas.width = this.currentImage.width;
+                downloadCanvas.height = this.currentImage.height;
+                
+                // 元の画像をそのまま描画
+                downloadCtx.drawImage(this.currentImage, 0, 0);
+                
+                downloadCanvas.toBlob((blob) => {
+                    const sizeInMB = (blob.size / (1024 * 1024)).toFixed(2);
+                    console.log(`ダウンロードファイルサイズ: ${sizeInMB}MB (${blob.size} bytes)`);
+                    
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `trimmed_image_${Date.now()}.jpg`;
+                    a.download = `image_${this.currentImage.width}x${this.currentImage.height}_${sizeInMB}MB_${Date.now()}.jpg`;
                     a.click();
                     URL.revokeObjectURL(url);
+                    
+                    console.log('===== ダウンロード処理完了 =====');
                 }, 'image/jpeg', this.quality);
             }
             
