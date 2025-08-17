@@ -752,18 +752,35 @@
             }
             
             async cropTo10MB() {
+                console.log('===== 10MBトリミング処理開始 =====');
+                const startTime = performance.now();
+                
+                // プログレス表示を作成
+                this.showProgressIndicator('10MBに最適化中...');
+                
                 const targetSize = 10 * 1024 * 1024; // 10MB in bytes
+                console.log(`目標サイズ: ${(targetSize / (1024 * 1024)).toFixed(2)}MB`);
+                console.log(`現在の画像サイズ: ${this.currentImage.width}x${this.currentImage.height}`);
+                
                 let scale = 1;
                 let quality = this.quality;
                 let attempts = 0;
                 const maxAttempts = 20;
+                let lastEstimatedSize = 0;
+                
+                console.log(`初期設定 - Scale: ${scale}, Quality: ${quality}`);
                 
                 while (attempts < maxAttempts) {
+                    console.log(`\n--- 試行 ${attempts + 1}/${maxAttempts} ---`);
+                    
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     
-                    tempCanvas.width = this.currentImage.width * scale;
-                    tempCanvas.height = this.currentImage.height * scale;
+                    tempCanvas.width = Math.round(this.currentImage.width * scale);
+                    tempCanvas.height = Math.round(this.currentImage.height * scale);
+                    
+                    console.log(`Canvas サイズ: ${tempCanvas.width}x${tempCanvas.height}`);
+                    console.log(`Scale: ${scale.toFixed(3)}, Quality: ${quality.toFixed(3)}`);
                     
                     tempCtx.drawImage(this.currentImage, 0, 0, tempCanvas.width, tempCanvas.height);
                     
@@ -771,33 +788,121 @@
                     const base64 = dataUrl.split(',')[1];
                     const estimatedSize = base64.length * 0.75;
                     
+                    console.log(`推定サイズ: ${(estimatedSize / (1024 * 1024)).toFixed(2)}MB`);
+                    console.log(`目標との差: ${((estimatedSize - targetSize) / (1024 * 1024)).toFixed(2)}MB`);
+                    console.log(`誤差率: ${(Math.abs(estimatedSize - targetSize) / targetSize * 100).toFixed(1)}%`);
+                    
+                    // プログレス更新
+                    this.updateProgressIndicator(
+                        `最適化中... (${attempts + 1}/${maxAttempts})<br>` +
+                        `現在: ${(estimatedSize / (1024 * 1024)).toFixed(2)}MB / 目標: 10MB`
+                    );
+                    
                     if (Math.abs(estimatedSize - targetSize) < targetSize * 0.05) {
                         // 5%以内の誤差なら完了
+                        console.log('✅ 目標サイズに到達！');
                         const img = new Image();
                         img.onload = () => {
                             this.currentImage = img;
                             this.displayImage(img);
-                            alert('画像を約10MBにトリミングしました！');
+                            const endTime = performance.now();
+                            console.log(`処理完了！ 所要時間: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
+                            console.log('===== 10MBトリミング処理終了 =====\n');
+                            this.hideProgressIndicator();
+                            alert(`画像を約10MB (${(estimatedSize / (1024 * 1024)).toFixed(2)}MB) に最適化しました！`);
                         };
                         img.src = dataUrl;
                         break;
                     }
                     
+                    // 収束していない場合の警告
+                    if (attempts > 5 && Math.abs(lastEstimatedSize - estimatedSize) < 1024) {
+                        console.warn('⚠️ サイズが収束しない可能性があります');
+                    }
+                    lastEstimatedSize = estimatedSize;
+                    
                     if (estimatedSize > targetSize) {
+                        const oldScale = scale;
+                        const oldQuality = quality;
+                        
                         scale *= 0.9;
                         if (scale < 0.1) {
                             quality *= 0.9;
                             scale = 0.1;
                         }
+                        
+                        console.log(`📉 サイズを縮小: Scale ${oldScale.toFixed(3)} → ${scale.toFixed(3)}, Quality ${oldQuality.toFixed(3)} → ${quality.toFixed(3)}`);
                     } else {
+                        const oldScale = scale;
+                        const oldQuality = quality;
+                        
                         scale *= 1.05;
                         if (scale > 1) {
                             scale = 1;
                             quality = Math.min(quality * 1.1, 1);
                         }
+                        
+                        console.log(`📈 サイズを拡大: Scale ${oldScale.toFixed(3)} → ${scale.toFixed(3)}, Quality ${oldQuality.toFixed(3)} → ${quality.toFixed(3)}`);
                     }
                     
                     attempts++;
+                }
+                
+                if (attempts >= maxAttempts) {
+                    console.error('❌ 最大試行回数に到達。処理を中止しました。');
+                    this.hideProgressIndicator();
+                    alert('10MBへの最適化に失敗しました。画像が小さすぎるか、大きすぎる可能性があります。');
+                }
+                
+                const endTime = performance.now();
+                console.log(`総処理時間: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
+                console.log('===== 10MBトリミング処理終了 =====\n');
+            }
+            
+            showProgressIndicator(message) {
+                // 既存のインジケーターを削除
+                const existing = document.getElementById('progressIndicator');
+                if (existing) {
+                    existing.remove();
+                }
+                
+                const indicator = document.createElement('div');
+                indicator.id = 'progressIndicator';
+                indicator.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.9);
+                    color: white;
+                    padding: 30px 40px;
+                    border-radius: 15px;
+                    font-size: 16px;
+                    z-index: 10000;
+                    text-align: center;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                `;
+                indicator.innerHTML = `
+                    <div style="margin-bottom: 15px;">⏳</div>
+                    <div>${message}</div>
+                `;
+                document.body.appendChild(indicator);
+            }
+            
+            updateProgressIndicator(message) {
+                const indicator = document.getElementById('progressIndicator');
+                if (indicator) {
+                    indicator.innerHTML = `
+                        <div style="margin-bottom: 15px;">⏳</div>
+                        <div>${message}</div>
+                    `;
+                }
+            }
+            
+            hideProgressIndicator() {
+                const indicator = document.getElementById('progressIndicator');
+                if (indicator) {
+                    indicator.remove();
                 }
             }
             
