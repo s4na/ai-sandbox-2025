@@ -471,7 +471,7 @@
                 });
                 
                 document.getElementById('crop10MBBtn').addEventListener('click', () => {
-                    this.cropTo10MB();
+                    this.startSmartCrop10MB();
                 });
                 
                 document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -754,6 +754,416 @@
                         document.getElementById('compareBtn').textContent = '📸 トリミング後を表示';
                     }
                     this.isShowingOriginal = !this.isShowingOriginal;
+                }
+            }
+            
+            startSmartCrop10MB() {
+                console.log('===== スマート10MBトリミング開始 =====');
+                
+                // トリミングモードに入る
+                this.is10MBMode = true;
+                this.isCropMode = true;
+                document.getElementById('cropModeIndicator').classList.add('active');
+                document.getElementById('cropModeIndicator').innerHTML = '📏 9-10MBトリミングモード';
+                
+                // 9-10MBの範囲を計算して候補ラインを表示
+                this.calculate10MBCropSizes();
+            }
+            
+            calculate10MBCropSizes() {
+                console.log('9-10MBの範囲でトリミングサイズを計算中...');
+                
+                const targetMin = 9 * 1024 * 1024; // 9MB
+                const targetMax = 10 * 1024 * 1024; // 10MB
+                
+                // 現在の画像のアスペクト比を維持
+                const aspectRatio = this.currentImage.width / this.currentImage.height;
+                
+                // 候補となるサイズを計算
+                const candidates = [];
+                const steps = 10; // 10段階で計算
+                
+                for (let i = 0; i <= steps; i++) {
+                    const scale = 0.5 + (0.5 * i / steps); // 50%から100%まで
+                    const width = Math.round(this.currentImage.width * scale);
+                    const height = Math.round(this.currentImage.height * scale);
+                    
+                    // サイズを推定
+                    const estimatedSize = this.estimateFileSize(width, height);
+                    
+                    if (estimatedSize >= targetMin && estimatedSize <= targetMax) {
+                        candidates.push({
+                            width: width,
+                            height: height,
+                            scale: scale,
+                            estimatedSize: estimatedSize
+                        });
+                    }
+                }
+                
+                if (candidates.length > 0) {
+                    // 最適なサイズを選択（10MBに最も近いもの）
+                    const optimal = candidates.reduce((prev, curr) => {
+                        const prevDiff = Math.abs(10 * 1024 * 1024 - prev.estimatedSize);
+                        const currDiff = Math.abs(10 * 1024 * 1024 - curr.estimatedSize);
+                        return currDiff < prevDiff ? curr : prev;
+                    });
+                    
+                    console.log(`最適なサイズ: ${optimal.width}x${optimal.height} (約${(optimal.estimatedSize / (1024 * 1024)).toFixed(2)}MB)`);
+                    
+                    // トリミング枠を表示
+                    this.show10MBCropBox(optimal.width, optimal.height);
+                } else {
+                    alert('9-10MBの範囲でトリミングできるサイズが見つかりませんでした。');
+                    this.exit10MBMode();
+                }
+            }
+            
+            estimateFileSize(width, height) {
+                // 簡易的なファイルサイズ推定
+                // JPEG品質とピクセル数から推定
+                const pixels = width * height;
+                const bitsPerPixel = this.quality * 2.5; // 品質に応じたビット数（経験値）
+                return Math.round(pixels * bitsPerPixel / 8);
+            }
+            
+            show10MBCropBox(targetWidth, targetHeight) {
+                // 既存のトリミング枠を削除
+                const existingBox = document.getElementById('smartCropBox');
+                if (existingBox) {
+                    existingBox.remove();
+                }
+                
+                // キャンバス上でのサイズを計算
+                const scaleX = this.canvas.width / this.currentImage.width;
+                const scaleY = this.canvas.height / this.currentImage.height;
+                const boxWidth = targetWidth * scaleX;
+                const boxHeight = targetHeight * scaleY;
+                
+                // トリミング枠を作成
+                const cropBox = document.createElement('div');
+                cropBox.id = 'smartCropBox';
+                cropBox.style.cssText = `
+                    position: absolute;
+                    border: 3px solid #00ff00;
+                    background: rgba(0, 255, 0, 0.1);
+                    cursor: move;
+                    z-index: 100;
+                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+                `;
+                cropBox.style.width = boxWidth + 'px';
+                cropBox.style.height = boxHeight + 'px';
+                cropBox.style.left = (this.canvas.width - boxWidth) / 2 + 'px';
+                cropBox.style.top = (this.canvas.height - boxHeight) / 2 + 'px';
+                
+                // リサイズハンドルを追加
+                const handles = ['nw', 'ne', 'sw', 'se'];
+                handles.forEach(pos => {
+                    const handle = document.createElement('div');
+                    handle.className = `resize-handle ${pos}`;
+                    handle.style.cssText = `
+                        position: absolute;
+                        width: 12px;
+                        height: 12px;
+                        background: white;
+                        border: 2px solid #00ff00;
+                        border-radius: 50%;
+                    `;
+                    
+                    if (pos.includes('n')) handle.style.top = '-6px';
+                    if (pos.includes('s')) handle.style.bottom = '-6px';
+                    if (pos.includes('w')) handle.style.left = '-6px';
+                    if (pos.includes('e')) handle.style.right = '-6px';
+                    
+                    handle.style.cursor = `${pos}-resize`;
+                    cropBox.appendChild(handle);
+                });
+                
+                // サイズ表示を追加
+                const sizeLabel = document.createElement('div');
+                sizeLabel.id = 'smartCropSizeLabel';
+                sizeLabel.style.cssText = `
+                    position: absolute;
+                    bottom: -30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                `;
+                cropBox.appendChild(sizeLabel);
+                
+                // キャンバスコンテナに追加
+                const canvasContainer = document.querySelector('.canvas-container');
+                canvasContainer.style.position = 'relative';
+                canvasContainer.appendChild(cropBox);
+                
+                // イベントリスナーを追加
+                this.makeSmartCropBoxDraggable(cropBox);
+                this.makeSmartCropBoxResizable(cropBox);
+                
+                // 初期サイズを表示
+                this.updateSmartCropSize(cropBox);
+                
+                // 確定ボタンを表示
+                this.showSmartCropButtons();
+            }
+            
+            makeSmartCropBoxDraggable(box) {
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+                
+                const startDrag = (e) => {
+                    if (e.target.classList.contains('resize-handle')) return;
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = box.offsetLeft;
+                    initialTop = box.offsetTop;
+                    e.preventDefault();
+                };
+                
+                const drag = (e) => {
+                    if (!isDragging) return;
+                    
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    
+                    let newLeft = initialLeft + dx;
+                    let newTop = initialTop + dy;
+                    
+                    // 境界チェック
+                    newLeft = Math.max(0, Math.min(newLeft, this.canvas.width - box.offsetWidth));
+                    newTop = Math.max(0, Math.min(newTop, this.canvas.height - box.offsetHeight));
+                    
+                    box.style.left = newLeft + 'px';
+                    box.style.top = newTop + 'px';
+                    
+                    this.updateSmartCropSize(box);
+                };
+                
+                const endDrag = () => {
+                    isDragging = false;
+                };
+                
+                box.addEventListener('mousedown', startDrag);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', endDrag);
+            }
+            
+            makeSmartCropBoxResizable(box) {
+                const handles = box.querySelectorAll('.resize-handle');
+                
+                handles.forEach(handle => {
+                    let isResizing = false;
+                    let startX, startY, startWidth, startHeight, startLeft, startTop;
+                    const pos = handle.className.split(' ')[1];
+                    
+                    handle.addEventListener('mousedown', (e) => {
+                        isResizing = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startWidth = box.offsetWidth;
+                        startHeight = box.offsetHeight;
+                        startLeft = box.offsetLeft;
+                        startTop = box.offsetTop;
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                    
+                    document.addEventListener('mousemove', (e) => {
+                        if (!isResizing) return;
+                        
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+                        
+                        let newWidth = startWidth;
+                        let newHeight = startHeight;
+                        let newLeft = startLeft;
+                        let newTop = startTop;
+                        
+                        // アスペクト比を維持
+                        const aspectRatio = this.currentImage.width / this.currentImage.height;
+                        
+                        if (pos.includes('e')) {
+                            newWidth = startWidth + dx;
+                            newHeight = newWidth / aspectRatio;
+                        }
+                        if (pos.includes('w')) {
+                            newWidth = startWidth - dx;
+                            newHeight = newWidth / aspectRatio;
+                            newLeft = startLeft + dx;
+                            newTop = startTop + (startHeight - newHeight);
+                        }
+                        if (pos.includes('s')) {
+                            newHeight = startHeight + dy;
+                            newWidth = newHeight * aspectRatio;
+                        }
+                        if (pos.includes('n')) {
+                            newHeight = startHeight - dy;
+                            newWidth = newHeight * aspectRatio;
+                            newTop = startTop + dy;
+                            newLeft = startLeft + (startWidth - newWidth);
+                        }
+                        
+                        // 最小サイズ制限
+                        if (newWidth > 50 && newHeight > 50) {
+                            box.style.width = newWidth + 'px';
+                            box.style.height = newHeight + 'px';
+                            box.style.left = newLeft + 'px';
+                            box.style.top = newTop + 'px';
+                            
+                            this.updateSmartCropSize(box);
+                        }
+                    });
+                    
+                    document.addEventListener('mouseup', () => {
+                        isResizing = false;
+                    });
+                });
+            }
+            
+            updateSmartCropSize(box) {
+                // キャンバス座標から実際の画像座標に変換
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                const actualWidth = Math.round(box.offsetWidth * scaleX);
+                const actualHeight = Math.round(box.offsetHeight * scaleY);
+                
+                // ファイルサイズを推定
+                const estimatedSize = this.estimateFileSize(actualWidth, actualHeight);
+                const sizeInMB = (estimatedSize / (1024 * 1024)).toFixed(2);
+                
+                // ラベルを更新
+                const label = box.querySelector('#smartCropSizeLabel');
+                if (label) {
+                    label.textContent = `${actualWidth}×${actualHeight} (約${sizeInMB}MB)`;
+                    
+                    // サイズに応じて色を変更
+                    if (estimatedSize >= 9 * 1024 * 1024 && estimatedSize <= 10 * 1024 * 1024) {
+                        box.style.borderColor = '#00ff00';
+                        label.style.background = 'rgba(0, 255, 0, 0.8)';
+                    } else if (estimatedSize < 9 * 1024 * 1024) {
+                        box.style.borderColor = '#ffff00';
+                        label.style.background = 'rgba(255, 255, 0, 0.8)';
+                    } else {
+                        box.style.borderColor = '#ff0000';
+                        label.style.background = 'rgba(255, 0, 0, 0.8)';
+                    }
+                }
+                
+                // 現在の設定を保存
+                this.smartCropArea = {
+                    left: box.offsetLeft,
+                    top: box.offsetTop,
+                    width: box.offsetWidth,
+                    height: box.offsetHeight,
+                    actualWidth: actualWidth,
+                    actualHeight: actualHeight,
+                    estimatedSize: estimatedSize
+                };
+            }
+            
+            showSmartCropButtons() {
+                // 既存のボタンを削除
+                const existingButtons = document.getElementById('smartCropButtons');
+                if (existingButtons) {
+                    existingButtons.remove();
+                }
+                
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.id = 'smartCropButtons';
+                buttonsDiv.style.cssText = `
+                    position: fixed;
+                    bottom: 140px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    gap: 15px;
+                    z-index: 1001;
+                `;
+                
+                const confirmBtn = document.createElement('button');
+                confirmBtn.textContent = '✂️ このサイズでトリミング';
+                confirmBtn.className = 'btn btn-success';
+                confirmBtn.onclick = () => this.confirmSmartCrop();
+                
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = '❌ キャンセル';
+                cancelBtn.className = 'btn btn-secondary';
+                cancelBtn.onclick = () => this.exit10MBMode();
+                
+                buttonsDiv.appendChild(confirmBtn);
+                buttonsDiv.appendChild(cancelBtn);
+                document.body.appendChild(buttonsDiv);
+                
+                // 説明を表示
+                const instructions = document.getElementById('cropInstructions');
+                instructions.innerHTML = '📏 緑の枠をドラッグして移動、角をドラッグしてサイズ調整<br>9-10MBの範囲で自由に調整できます';
+                instructions.classList.add('active');
+            }
+            
+            confirmSmartCrop() {
+                if (!this.smartCropArea) return;
+                
+                console.log(`スマートクロップ実行: ${this.smartCropArea.actualWidth}x${this.smartCropArea.actualHeight}`);
+                
+                // 元画像を保存
+                this.beforeCropImage = this.currentImage;
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                tempCanvas.width = this.smartCropArea.actualWidth;
+                tempCanvas.height = this.smartCropArea.actualHeight;
+                
+                tempCtx.drawImage(
+                    this.currentImage,
+                    this.smartCropArea.left * scaleX,
+                    this.smartCropArea.top * scaleY,
+                    this.smartCropArea.width * scaleX,
+                    this.smartCropArea.height * scaleY,
+                    0, 0,
+                    tempCanvas.width,
+                    tempCanvas.height
+                );
+                
+                const img = new Image();
+                img.onload = () => {
+                    this.currentImage = img;
+                    this.displayImage(img);
+                    this.exit10MBMode();
+                    this.showComparisonButton();
+                    
+                    const sizeInMB = (this.smartCropArea.estimatedSize / (1024 * 1024)).toFixed(2);
+                    alert(`画像を約${sizeInMB}MBにトリミングしました！`);
+                };
+                img.src = tempCanvas.toDataURL('image/jpeg', this.quality);
+            }
+            
+            exit10MBMode() {
+                this.is10MBMode = false;
+                this.isCropMode = false;
+                this.smartCropArea = null;
+                
+                document.getElementById('cropModeIndicator').classList.remove('active');
+                document.getElementById('cropInstructions').classList.remove('active');
+                
+                const smartCropBox = document.getElementById('smartCropBox');
+                if (smartCropBox) {
+                    smartCropBox.remove();
+                }
+                
+                const buttons = document.getElementById('smartCropButtons');
+                if (buttons) {
+                    buttons.remove();
                 }
             }
             
